@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	<head lang="en">
+		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+		<title>Neighborhood Map</title>
+		<link rel="stylesheet" href="css/custom.css"/>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1szx1heFDJTMTvu1EvowyBQb2ib-kfJI&libraries=places"></script>
+		<script src="js/vendor/jquery.js"></script>
+		<script src="js/vendor/jquery.scrollTo.js"></script>
+		<script src="js/vendor/knockout-3.2.0.debug.js"></script>
+		<script src="js/app.js"></script>
+	</head>
+	<body>
+		<div id="map-canvas"></div>
+
+
+		<div id="preload" style="display: none;">
+			<img src="https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1" width="1" height="1" alt="Image 01" />
+			<img src="http://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-waypoint-blue.png&scale=1" width="1" height="1" alt="Image 02" />
+			<img src="https://mt.google.com/vt/icon?psize=24&font=fonts/Roboto-Regular.ttf&color=ff330000&name=icons/spotlight/spotlight-waypoint-a.png&ax=44&ay=48&scale=1&text=•" width="1" height="1" alt="Image 03" />
+		</div>
+	</body>
+</html>
