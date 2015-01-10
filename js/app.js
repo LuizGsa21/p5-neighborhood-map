@@ -239,7 +239,6 @@ $(document).ready(function() {
             // Attaches each marker with i * 100 delay, i = marker's array index
             self.attachMarkers = function () {
 
-                self.nytQuery(self.markers()[0]);
                 for(var i = 0; i < self.markers().length; i++) {
                     setTimeout((function(index) {
                         return function () {
@@ -258,9 +257,6 @@ $(document).ready(function() {
             marker.isFocus(true);
         };
 
-        self.setMarkerFocus = function () {
-
-        };
 
         // Keeps map centered when being resized
         google.maps.event.addDomListener(window, 'resize', function() {
