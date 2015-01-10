@@ -52,7 +52,7 @@ $(document).ready(function() {
         // Info window to display when the marker is clicked
         self.attached.infoWindow = new google.maps.InfoWindow({
             content: [
-                '<div id="', self.id,'" class="placeInfo"><h2><strong>', self.name, '</strong></h2> ',
+                '<div id="', self.id,'" class="placeInfo""><h2><strong>', self.name, '</strong></h2> ',
                 '<p>', self.address, '</p>','<div id="',self.panoId,'" class="panorama"> </div>' ,'</div>'
             ].join('')
         });
@@ -159,7 +159,6 @@ $(document).ready(function() {
 
         // Get the pano div for this marker
         var panoDiv = document.getElementById(this.panoId);
-        var outerContainer = parents[1];
 
         // Attach pano to infoWindow if marker has a pano
         if (this.attached.pano != null) {
@@ -173,7 +172,8 @@ $(document).ready(function() {
                 visible: true,
                 navigationControlOptions: { style: google.maps.NavigationControlStyle.ANDROID }
             };
-            $(outerContainer).css("width", "100%");
+            // make infoWindow div
+            $(parents[1]).css("width", "100%");
             var panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
         } else {
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
@@ -214,7 +214,7 @@ $(document).ready(function() {
                             var marker = new Marker(result[i]);
                             var location = result[i].geometry.location;
 
-                            self.streetViewService.getPanoramaByLocation(location, 100, function(data, panoStatus) {
+                            self.streetViewService.getPanoramaByLocation(location, 60, function(data, panoStatus) {
                                 // If marker has a panorama
                                 if (panoStatus == google.maps.StreetViewStatus.OK) {
                                     this.attached.pano = data.location.pano; // attach pano to marker
@@ -239,6 +239,7 @@ $(document).ready(function() {
             // Attaches each marker with i * 100 delay, i = marker's array index
             self.attachMarkers = function () {
 
+                self.nytQuery(self.markers()[0]);
                 for(var i = 0; i < self.markers().length; i++) {
                     setTimeout((function(index) {
                         return function () {
@@ -274,8 +275,8 @@ $(document).ready(function() {
         self.searchQuery(mapConfig.locations);
 
 
-
     };
+
 
     ko.applyBindings(new MapViewModal(mapConfig));
 });

@@ -7,11 +7,11 @@ body,
 }
 
 .panorama {
-
+    height: 300px;
+    width: 100%;
 }
 
 .placeInfo {
-    position: relative;
     width:  100%;
     height:  100%;
 }
