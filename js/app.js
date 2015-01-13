@@ -21,17 +21,20 @@ $(document).ready(function() {
         // objects that get attached to this marker
         self.attached = {
             map: null,
-            infoWindow: null,
-            pano: null
+            infoWindow: null
         };
 
         self.id = 'marker-' + Marker.idNumber++;
-        self.panoId = 'pano' + self.id;
+        self.panoId = 'pano-' + self.id;
+        self.foursquareId = 'foursquare-' + self.id;
+
         self.lat = location.geometry.location.lat();
         self.lng = location.geometry.location.lng();
         self.name = location.name;
         self.address = location.formatted_address;
-        self.website = '';
+
+        self.pano = ko.observable(null);
+        self.foursquare = ko.observable(null);
 
         self.isFocus = ko.observable(false);
         self.isMouseOver = ko.observable(false);
@@ -50,12 +53,10 @@ $(document).ready(function() {
         });
 
         // Info window to display when the marker is clicked
-        self.attached.infoWindow = new google.maps.InfoWindow({
-            content: [
-                '<div id="', self.id,'" class="placeInfo""><h2><strong>', self.name, '</strong></h2> ',
-                '<p>', self.address, '</p>','<div id="',self.panoId,'" class="panorama"> </div>' ,'</div>'
-            ].join('')
-        });
+        self.attached.infoWindow = new google.maps.InfoWindow();
+
+        // Update infowindow when panoramo result is receieved
+        self.pano.subscribe(self.loadInfoWindowContent, self);
 
 
         // Event listeners to update the marker's observables
@@ -67,9 +68,10 @@ $(document).ready(function() {
 
         google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {
             // remove click listener from parent div
-            $('#' + self.id).parents()[3].onclick = null;
+            //$('#' + self.id).parents()[3].onclick = null;
             self.isWindowInfoOpen(false);
         });
+
     };
 
     // Static variable used to create unique id selectors
@@ -79,7 +81,7 @@ $(document).ready(function() {
     // z index to increment when bringing marker or infowindow to focus
     Marker.zIndex = 0;
 
-    // Images for the marker current state
+    // Images for the marker's current state
     // INACTIVE = red
     Marker.prototype.INACTIVE = 'https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1';
     // HOVER = blue
@@ -101,6 +103,7 @@ $(document).ready(function() {
         if (!this.isWindowInfoOpen()) {
             var marker = this.googleMarker;
             this.attached.infoWindow.open(marker.getMap(), marker);
+            this.loadInfoWindowContent();
             this.isWindowInfoOpen(true);
         }
     };
@@ -126,11 +129,9 @@ $(document).ready(function() {
     };
 
     Marker.prototype.click = function () {
-        if (this.isWindowInfoOpen()) {
-            this.closeInfoWindow();
-        } else {
-            this.focus();
-            this.openInfoWindow();
+        var myMap = this.attached.map;
+        if (myMap != null) {
+            myMap.setActiveMarker(this);
         }
     };
 
@@ -140,47 +141,76 @@ $(document).ready(function() {
         this.attached.infoWindow.setZIndex(zIndex);
     };
 
+    Marker.prototype.setMap = function (myMap) {
+        this.attached.map = myMap;
+        this.googleMarker.setMap(myMap.googleMap);
+    };
+
+    Marker.prototype.getInfoWindowcontent = function () {
+
+        var content = $('#infoWindowTemplate').html();
+        content = content.replace('{{id}}', this.id);
+        content = content.replace('{{title}}', this.name);
+        content = content.replace('{{address}}', this.address);
+        content = content.replace('{{panoId}}', this.panoId);
+
+        var panorama = this.pano() != null ? 'panorama' : 'no-panorama';
+
+        var foursquare = '';
+        var fourSquareContent = '';
+
+        if (this.foursquare() != null) {
+            foursquare = 'foursquare';
+            fourSquareContent = '';
+            console.log(this.foursquare());
+        }
+
+        content = content.replace('{{foursquare}}', foursquare);
+        content = content.replace('{{foursquareContent}}', fourSquareContent);
+        content = content.replace('{{panoramaClass}}', panorama);
+
+        return content;
+    };
+
+    Marker.prototype.loadInfoWindowContent = function () {
+        this.attached.infoWindow.setContent(this.getInfoWindowcontent());
+    };
+
+
     /**
      * Sets a click listener to the third parent of infoWindow element.
      */
     Marker.prototype.onDOMInfoWindowReady = function () {
 
-        var parents = $('#' + this.id).parents(); // get the google generated parent elements
-
-        // Get the element that contains the entire infoWindow
-        // and add a click listener to bring focus on click
-        parents[3].onclick = function () {
-            // Make sure the click is not on the X image (X image closes the infoWindow)
-            if (!$(event.target).is('img')) {
-                console.log('clicked');
-                this.focus(); // bring focus...
-            }
-        }.bind(this);
-
         // Get the pano div for this marker
         var panoDiv = document.getElementById(this.panoId);
 
+        if (this.foursquare() != null) {
+
+        }
         // Attach pano to infoWindow if marker has a pano
-        if (this.attached.pano != null) {
+        if (this.pano() != null) {
             // Pano custom options
             var panoOptions = {
                 navigationControl: true,
                 enableCloseButton: false,
                 addressControl: false,
                 linksControl: false,
-                pano: this.attached.pano,
+                pano: this.pano(),
                 visible: true,
                 navigationControlOptions: { style: google.maps.NavigationControlStyle.ANDROID }
             };
-            // make infoWindow div
-            $(parents[1]).css("width", "100%");
+            // make pano expand to the edge of the infoWindow
+            var container = $('#' + this.id).parents()[1];
+            $(container).css("width", "100%");
+            // add pano to infowindow
             var panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
         } else {
+            //$(panoDiv).css("height", "100px")
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
         }
 
     };
-
 
     var MapViewModal = function (mapConfig) {
         var self = this;
@@ -195,6 +225,7 @@ $(document).ready(function() {
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
 
+        self.activeMarker = null;
 
         self.searchQuery = function (locations) {
 
@@ -215,12 +246,52 @@ $(document).ready(function() {
                             var location = result[i].geometry.location;
 
                             self.streetViewService.getPanoramaByLocation(location, 60, function(data, panoStatus) {
-                                // If marker has a panorama
+                                // If location has a panorama
                                 if (panoStatus == google.maps.StreetViewStatus.OK) {
-                                    this.attached.pano = data.location.pano; // attach pano to marker
+                                    this.pano(data.location.pano); // attach pano to marker
                                 }
 
                             }.bind(marker));
+
+                            var url = [
+                                "http://api.foursquare.com/v2/venues/search", // base url
+                                "?client_id=DNHYJ5KY031FDOFXBAFROUXSDHJBLLFVKIBX5FVO10QWSU3J", // clientId
+                                "&client_secret=TLJHOC3BO5LFV31JB3VTXTRGZYXWG5DJISR3M3STUXR14Q4J", // client secret
+                                "&ll="+location.lat()+","+location.lng(), // latitude and longitude
+                                "&query=" + result[i].name, // name to match
+                                "&v=20140806", // version
+                                "&m=foursquare", // mode
+                            ];
+
+                            // Make a ajax request to get the location VENUE_ID
+                            $.ajax(url.join(''), {
+                                dataType: 'json',
+                                success: function(data) {
+
+                                    if (data.response.venues.length == 0) {
+                                        return;
+                                    }
+
+                                    // get venue_id
+                                    var venue_id = data.response.venues[0].id;
+                                    // create new query string
+                                    var url = [
+                                        "https://api.foursquare.com/v2/venues/",
+                                        venue_id,
+                                        "/?client_id=DNHYJ5KY031FDOFXBAFROUXSDHJBLLFVKIBX5FVO10QWSU3J&client_secret=TLJHOC3BO5LFV31JB3VTXTRGZYXWG5DJISR3M3STUXR14Q4J&v=20140806"
+                                    ];
+
+                                    // Use the VENUE_ID to get a more detailed info from location
+                                    $.ajax(url.join(''), {
+                                        dataType: 'json',
+                                        success: function(data) {
+                                            // Save venue details to this marker
+                                            this.foursquare(data.response.venue);
+                                        }.bind(this)
+                                    });
+
+                                }.bind(marker)
+                            });
 
                             // extend bounds
                             bounds.extend(location);
@@ -228,6 +299,7 @@ $(document).ready(function() {
                             // Add marker to observable array
                             self.markers.push(marker);
                         }
+
                         // fit map with the new bounds
                         self.googleMap.fitBounds(bounds);
                         self.attachMarkers();
@@ -238,23 +310,37 @@ $(document).ready(function() {
 
             // Attaches each marker with i * 100 delay, i = marker's array index
             self.attachMarkers = function () {
-
                 for(var i = 0; i < self.markers().length; i++) {
                     setTimeout((function(index) {
                         return function () {
-                            var googleMarker = self.markers()[index].googleMarker;
-                            googleMarker.setMap(self.googleMap);
-                            googleMarker.setZIndex(Marker.zIndex++);
+                            var marker = self.markers()[index];
+                            marker.setMap(self);
+                            marker.googleMarker.setZIndex(Marker.zIndex++);
                         };
                     })(i),i * 100);
                 }
             };
 
         };
+
         // Centers map on marker
         self.centerOnMarker = function (marker) {
             self.googleMap.panTo(marker.googleMarker.getPosition());
             marker.isFocus(true);
+        };
+
+        self.setActiveMarker = function (marker) {
+            if (self.activeMarker != null && self.activeMarker != marker) {
+                self.activeMarker.closeInfoWindow();
+            }
+            if (marker.isWindowInfoOpen()) {
+                marker.closeInfoWindow();
+                self.activeMarker = null;
+            } else {
+                marker.focus();
+                marker.openInfoWindow();
+                self.activeMarker = marker;
+            }
         };
 
 
