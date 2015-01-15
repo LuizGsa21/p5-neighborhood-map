@@ -202,7 +202,7 @@ $(document).ready(function() {
         div.innerHTML = content;
         var fragment = div.childNodes[1];
 
-        var height = (this.panoData != null) ? '360px' : '300px';
+        var height = (this.panoData != null) ? '360px' : '200px';
         fragment.style.height = height;
         return fragment;
 
