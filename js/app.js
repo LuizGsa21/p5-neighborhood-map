@@ -31,6 +31,7 @@ $(document).ready(function() {
         self.website = vResponse.url;
         self.fsWebsite = vResponse.canonicalUrl;
 
+        console.log(self.contact);
         self.panoData = null;
 
         // objects that get attached to this marker
@@ -197,6 +198,7 @@ $(document).ready(function() {
         content = content.replace('{{panoId}}', this.panoId);
         content = content.replace('{{id}}', this.id);
         content = content.replace('{{panoramaClass}}', (this.panoData != null) ? 'panorama' : 'no-panorama');
+        content = content.replace('{{phone}}',  this.contact.formattedPhone);
 
         var div = document.createElement('div');
         div.innerHTML = content;
@@ -204,6 +206,7 @@ $(document).ready(function() {
 
         var height = (this.panoData != null) ? '360px' : '200px';
         fragment.style.height = height;
+
         return fragment;
 
 

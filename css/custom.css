@@ -52,6 +52,15 @@ body,
     height: 80%;
 }
 
+
+.contactInfo p {
+    margin: 0.5em 0 0.2em 0;
+
+}
+.contactInfo {
+    width: 100%;
+    min-height: 100px;
+}
 .address {
     display: inline-block;
     float: left;
@@ -66,7 +75,16 @@ body,
 .rating {
     text-align: right;
     float: right;
+    clear: right;
 }
+
+.phone {
+    float: right;
+    /*clear: both;*/
+    margin-top: 0;
+}
+
+
 /* ---- ./foursquare contents */
 /* ---------- ./ Info Window CSS */
 
