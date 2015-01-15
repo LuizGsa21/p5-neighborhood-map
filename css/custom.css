@@ -6,19 +6,82 @@ body,
     padding: 0;
 }
 
+/* Fix infoWindow scroll bug */
+.gm-style-iw div {
+    /*line-height:1.35;*/
+    /*line-height: normal;*/
+    /*overflow: auto;*/
+    /*overflow:hidden;*/
+    /*white-space:nowrap;*/
+}
+/* ./scroll bug */
+
+
+
+
+
 .panorama {
-    height: 200px;
-    /*position: relative;*/
-    /*top: -5px;*/
+    height: 70%;
     width: 100%;
+    display: block;
 }
 
 .no-panorama {
-    height: 30px;
+    height: 50px;
+    width: 100%;
 }
 
-.placeInfo {
-    margin: 0 auto;
-    width: 100%;
-    /*height:  100%;*/
+
+.gm-style-iw {
+    margin: 0;
+    padding: 0;
 }
+
+
+/* ---------- Info Window CSS */
+/* container  */
+.placeInfo {
+    min-width: 300px;
+    width: 100%;
+}
+
+/* Foursquare contents */
+.foursquare {
+    position: relative;
+    line-height: 1.4em;
+    height: 80%;
+}
+
+.address {
+    display: inline-block;
+    float: left;
+}
+
+.moreInfo-link {
+    text-align: right;
+    float:right;
+    clear: right;
+}
+
+.rating {
+    text-align: right;
+    float: right;
+}
+/* ---- ./foursquare contents */
+/* ---------- ./ Info Window CSS */
+
+
+/* convenience classes */
+.text-right {
+    text-align: right;
+}
+.text-center {
+    text-align: center;
+}
+.pull-right {
+    float: right;
+}
+.hide {
+    display: none;
+}
+/* ---- ./convenience */

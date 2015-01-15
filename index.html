@@ -17,13 +17,18 @@
 	<body>
 		<div id="map-canvas"></div>
 
-		<script type="text/html" id="infoWindowTemplate">
+		<!-- Info window template -->
+		<script type="text/html" id="foursquareTemplate">
 			<div id="{{id}}" class="placeInfo">
-				<h2>{{title}}</h2>
-				<h3>Location</h3>
-				<p>{{address}}</p>
-				<div class="{{foursquareClass}}">{{foursquareContent}}</div>
-				<div id="{{panoId}}" class="{{panoramaClass}}"></div>
+				<h2 class="text-center">{{title}}</h2>
+				<div class="foursquare">
+					<div style="width: 100%; min-height: 100px;">
+						<p class="address"><strong>Location:</strong><br>{{address}}</p>
+						<p class="rating">{{rating}}</p>
+						<p class="moreInfo-link">{{info}}</p>
+					</div>
+					<div id="{{panoId}}" class="{{panoramaClass}}"></div>
+				</div>
 			</div>
 		</script>
 
