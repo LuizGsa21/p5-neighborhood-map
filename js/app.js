@@ -17,6 +17,71 @@ $(document).ready(function() {
         }
     };
 
+    var FourSquareService = function (appId, secretKey, version, mode) {
+
+        var self = this;
+
+        self.appId = ['?client_id=', appId].join('');
+
+        self.secretKey = ['&client_secret=', secretKey].join('');
+
+        self.version = ['&v=' , version].join('');
+
+        self.mode = ['&m=' , mode].join('');
+
+        self.queryOptions = {
+            explore: 'venues/explore',
+            venueDetail: 'venues/',
+            search: 'venues/search'
+        };
+
+        self.getBaseURL = function (queryOption) {
+            return ['https://api.foursquare.com/v2/', queryOption, self.appId , self.secretKey , self.version , self.mode].join('');
+        };
+
+        self.explore = function (searchObject, callback) {
+            var query = [self.getBaseURL(self.queryOptions.explore)];
+
+            // get keys from search object
+            var keys = Object.keys(searchObject);
+
+            // create url from searchObject
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                query.push(['&', key, '=', searchObject[key]].join(''));
+            }
+
+            // replace all whitespace with +
+            var url = query.join('').replace(/\s+/g, '+');
+
+            var response = function(data) {
+                callback(data);
+            };
+            $.ajax(url, {
+                dataType: 'jsonp',
+                success: response,
+                fail: response
+            });
+        };
+
+        self.venueDetails = function(venueId, callback) {
+
+            var url = self.getBaseURL([self.queryOptions.venueDetail, venueId, '/'].join(''));
+
+            var response = function(data) {
+                callback(data);
+            };
+            $.ajax(url, {
+                dataType: 'jsonp',
+                success: response,
+                fail: response
+            });
+
+        };
+
+    };
+
+
     var Marker = function (vResponse) {
 
         var self = this;
@@ -31,7 +96,6 @@ $(document).ready(function() {
         self.website = vResponse.url;
         self.fsWebsite = vResponse.canonicalUrl;
 
-        console.log(self.contact);
         self.panoData = null;
 
         // objects that get attached to this marker
@@ -44,6 +108,11 @@ $(document).ready(function() {
         self.isFocus = ko.observable(false);
         self.isMouseOver = ko.observable(false);
         self.isWindowInfoOpen = ko.observable(false);
+
+        // Update the marker's color when its state changes
+        this.isMouseOver.subscribe(this.updateColor, this);
+        this.isWindowInfoOpen.subscribe(this.updateColor, this);
+        this.isFocus.subscribe(this.updateColor, this);
 
         // Create a google marker with drop down animation
         self.googleMarker = new google.maps.Marker({
@@ -84,18 +153,6 @@ $(document).ready(function() {
     // ACTIVE = green
     Marker.prototype.ACTIVE = 'https://mt.google.com/vt/icon?psize=24&font=fonts/Roboto-Regular.ttf&color=ff330000&name=icons/spotlight/spotlight-waypoint-a.png&ax=44&ay=48&scale=1&text=•';
 
-    /**
-     * To prevent the marker from changing color on mouse hover during
-     * drop animation call this method after marker is attached to the map
-     */
-    Marker.prototype.subscribeListners = function () {
-        setTimeout(function () {
-            // Update the marker's color when its state changes
-            this.isMouseOver.subscribe(this.updateColor, this);
-            this.isWindowInfoOpen.subscribe(this.updateColor, this);
-            this.isFocus.subscribe(this.updateColor, this);
-        }.bind(this), 500);
-    };
     /**
      * Close info window if its open
      */
@@ -227,7 +284,6 @@ $(document).ready(function() {
 
         // Edit google's generated element to center infoWindow content
         var container = $('#' + this.id).parents()[0];
-        console.log($('#' + this.id).parents()[0]);
         $(container).css('width', '100%');
 
         // Append panorama view to fragment
@@ -252,9 +308,9 @@ $(document).ready(function() {
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
         }
 
-        // InfoWindow would sometimes highlight entire div text when opening.
+        // InfoWindow sometimes highlights entire div text when opening.
         // Solution: clear text selection when infoWindow opens
-        // Snippet taken from: http://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
+        // Code taken from: http://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
         if (window.getSelection) {
             if (window.getSelection().empty) {  // Chrome
                 window.getSelection().empty();
@@ -269,68 +325,63 @@ $(document).ready(function() {
 
     };
 
-    var FourSquareService = function (appId, secretKey, version, mode) {
+    var ListPanel = function (observableMarkers) {
 
         var self = this;
+        self.isVisible = ko.observable(true);
+        self.markers = observableMarkers;
 
-        self.appId = ['?client_id=', appId].join('');
+        // The list panel title
+        self.title = ko.pureComputed(function () {
+            return self.isVisible() ? 'Hide List' : 'Show List';
+        });
+    };
 
-        self.secretKey = ['&client_secret=', secretKey].join('');
+    /**
+     * Called by ListPanel.itemClick
+     * Centers map on marker
+     * @param {Marker} marker - marker
+     */
+    ListPanel.prototype.centerMapOnMarker = function(marker) {
 
-        self.version = ['&v=' , version].join('');
+        var center = new google.maps.LatLng(marker.googleMarker.getPosition());
+        marker.googleMarker.getMap().panTo(center);
+    };
 
-        self.mode = ['&m=' , mode].join('');
+    /**
+     * This method is called when user clicks on a marker inside the list panel.
+     * 1. Triggers the marker's click event if its info window is closed
+     * 2. Centers map on marker
+     * Triggers the marker's click event
+     * @param {Marker} marker - the marker
+     */
+    ListPanel.prototype.itemClick = function (marker) {
+        marker.click();
+    };
 
-        self.queryOptions = {
-            explore: 'venues/explore',
-            venueDetail: 'venues/',
-            search: 'venues/search'
-        };
+    /**
+     * Closes list panel if its current state is open
+     */
+    ListPanel.prototype.close = function () {
+        if (this.isVisible()) {
+            this.isVisible(false);
+        }
+    };
 
-        self.getBaseURL = function (queryOption) {
-            return ['https://api.foursquare.com/v2/', queryOption, self.appId , self.secretKey , self.version , self.mode].join('');
-        };
+    /**
+     * Opens list panel if its current state is closed
+     */
+    ListPanel.prototype.open = function () {
+        if (!this.isVisible()) {
+            this.isVisible(true);
+        }
+    };
 
-        self.explore = function (searchObject, callback) {
-            var query = [self.getBaseURL(self.queryOptions.explore)];
-
-            // get keys from search object
-            var keys = Object.keys(searchObject);
-
-            // create url from searchObject
-            for (var i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                query.push(['&', key, '=', searchObject[key]].join(''));
-            }
-
-            // replace all whitespace with +
-            var url = query.join('').replace(/\s+/g, '+');
-
-            var response = function(data) {
-                callback(data);
-            };
-            $.ajax(url, {
-                dataType: 'jsonp',
-                success: response,
-                fail: response
-            });
-        };
-
-        self.venueDetails = function(venueId, callback) {
-
-            var url = self.getBaseURL([self.queryOptions.venueDetail, venueId, '/'].join(''));
-
-            var response = function(data) {
-                callback(data);
-            };
-            $.ajax(url, {
-                dataType: 'jsonp',
-                success: response,
-                fail: response
-            });
-
-        };
-
+    /**
+     * Toggles listPanel's current state
+     */
+    ListPanel.prototype.toggle = function () {
+        this.isVisible(!this.isVisible());
     };
 
     var MapViewModal = function (mapConfig) {
@@ -353,6 +404,9 @@ $(document).ready(function() {
 
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
+        self.listPanel = new ListPanel(self.markers);
+
+        self.googleMap.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(document.getElementById('listPanel'));
 
         // Last timeout tracker used in addMarker
         self.lastTimeout = null;
@@ -360,12 +414,12 @@ $(document).ready(function() {
             self.markers.push(marker);
 
             // If there is a current timeout pending, stop it
-            if (self.lastTimeout != null) {
-                //clearTimeout(self.lastTimeout);
-            }
+            //if (self.lastTimeout != null) {
+            //    clearTimeout(self.lastTimeout);
+            //}
             // set a timeout to attachMarkers (drop markers on map with animation)
-            self.lastTimeout = setTimeout(self.attachMarkers, 200);
-            self.attachMarkers();
+            //self.lastTimeout = setTimeout(self.attachMarkers, 2000);
+            //self.attachMarkers();
 
         };
 
@@ -380,20 +434,27 @@ $(document).ready(function() {
 
                     var items = data.response.groups[0].items;
 
-                    // Get a more detailed venue for each item
+                    var requestCount = items.length;
+                    var count = 0;
                     for (var i = 0; i < items.length; i++) {
                         var venueId = items[i].venue.id;
-
+                        // Get a more detailed venue for each item
                         self.fsService.venueDetails(venueId, function(data) {
-                            // Create a marker object
+
                             if (data.meta.code === 200) {
-                                var marker = new Marker(data.response.venue)
+                                // Create a marker object
+                                var marker = new Marker(data.response.venue);
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
                                     if (status == google.maps.StreetViewStatus.OK) {
                                         this.panoData = data.location.pano;
+                                        console.log('here');
                                     }
                                 }.bind(marker));
                                 self.addMarker(marker);
+                            }
+                            count++;
+                            if (count == requestCount) {
+                                self.attachMarkers();
                             }
                         });
 
@@ -408,18 +469,13 @@ $(document).ready(function() {
         self.attachMarkers = function () {
             for(var i = 0; i < self.markers().length; i++) {
                 var marker = self.markers()[i];
-                // Check to see if marker is not attached to the map
-                if (marker.getMyMap() == null) {
-                    // set timeout animation
-                    setTimeout((function(marker) {
-                        return function () {
-                            marker.setMyMap(self);
-                            marker.focus();
-                            marker.subscribeListners();
-                        };
-                    })(marker),i * 0);
-
-                }
+                // set timeout animation
+                setTimeout((function(marker) {
+                    return function () {
+                        marker.setMyMap(self);
+                        //marker.focus();
+                    };
+                })(marker),i * 100);
             }
         };
 
@@ -430,17 +486,13 @@ $(document).ready(function() {
         };
 
         self.setActiveMarker = function (marker) {
-            if (self.activeMarker != null && self.activeMarker != marker) {
+            if (self.activeMarker != null) {
                 self.activeMarker.closeInfoWindow();
             }
-            if (marker.isWindowInfoOpen()) {
-                marker.closeInfoWindow();
-                self.activeMarker = null;
-            } else {
-                marker.focus();
-                marker.openInfoWindow();
-                self.activeMarker = marker;
-            }
+            marker.focus();
+            marker.openInfoWindow();
+            self.activeMarker = marker;
+
         };
 
         // Keeps map centered when being resized

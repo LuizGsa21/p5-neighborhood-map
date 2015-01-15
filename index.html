@@ -27,13 +27,30 @@
 						<p class="phone"><strong>Phone: </strong>{{phone}}</p>
 						<p class="rating">{{rating}}</p>
 						<p class="moreInfo-link">{{info}}</p>
-
 					</div>
 					<div id="{{panoId}}" class="{{panoramaClass}}"></div>
 				</div>
 			</div>
 		</script>
-
+		<div id="listPanel" data-bind="with: listPanel">
+			<ol type="1" class="list-items"
+			    data-bind="visible: isVisible,
+                    foreach: { data: markers, as: 'marker' }">
+				<li data-bind="event: {
+                        mouseover: mouseover,
+                        mouseout: mouseout,
+                        click: click
+                      },
+                      css: {active: isMouseOver() || isFocus()},
+                      attr: { id: $index() },
+                      text: name">
+				</li>
+			</ol>
+			<button class="btn-panel"
+			        data-bind="click: toggle.bind($data)">
+				<span data-bind="text: title "></span><a href="#" class="glyphicon-minimize"></a>
+			</button>
+		</div>
 
 		<div id="preload" style="display: none;">
 			<img src="https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1" width="1" height="1" alt="Image 01" />
