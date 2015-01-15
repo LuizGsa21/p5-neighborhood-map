@@ -331,6 +331,21 @@ $(document).ready(function() {
         self.isVisible = ko.observable(true);
         self.markers = observableMarkers;
 
+        self.query = ko.observable('');
+
+        self.filterMarkers = ko.computed(function () {
+            if (self.query().length == 0) {
+                return self.markers();
+            } else {
+                return ko.utils.arrayFilter(self.markers(), function (marker) {
+                    var query = self.query().toLowerCase();
+                    var name = marker.name.toLowerCase();
+                    return (name.indexOf(query) >= 0)
+                });
+            }
+        });
+
+
         // The list panel title
         self.title = ko.pureComputed(function () {
             return self.isVisible() ? 'Hide List' : 'Show List';
@@ -346,9 +361,7 @@ $(document).ready(function() {
 
         self.toggle = function () {
             self.isVisible(!self.isVisible());
-
         };
-
 
 
     };
