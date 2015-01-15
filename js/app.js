@@ -335,53 +335,22 @@ $(document).ready(function() {
         self.title = ko.pureComputed(function () {
             return self.isVisible() ? 'Hide List' : 'Show List';
         });
-    };
 
-    /**
-     * Called by ListPanel.itemClick
-     * Centers map on marker
-     * @param {Marker} marker - marker
-     */
-    ListPanel.prototype.centerMapOnMarker = function(marker) {
+        self.close =  function () {
+            self.isVisible(false);
+        };
 
-        var center = new google.maps.LatLng(marker.googleMarker.getPosition());
-        marker.googleMarker.getMap().panTo(center);
-    };
+        self.open = function () {
+            self.isVisible(true);
+        };
 
-    /**
-     * This method is called when user clicks on a marker inside the list panel.
-     * 1. Triggers the marker's click event if its info window is closed
-     * 2. Centers map on marker
-     * Triggers the marker's click event
-     * @param {Marker} marker - the marker
-     */
-    ListPanel.prototype.itemClick = function (marker) {
-        marker.click();
-    };
+        self.toggle = function () {
+            self.isVisible(!self.isVisible());
 
-    /**
-     * Closes list panel if its current state is open
-     */
-    ListPanel.prototype.close = function () {
-        if (this.isVisible()) {
-            this.isVisible(false);
-        }
-    };
+        };
 
-    /**
-     * Opens list panel if its current state is closed
-     */
-    ListPanel.prototype.open = function () {
-        if (!this.isVisible()) {
-            this.isVisible(true);
-        }
-    };
 
-    /**
-     * Toggles listPanel's current state
-     */
-    ListPanel.prototype.toggle = function () {
-        this.isVisible(!this.isVisible());
+
     };
 
     var MapViewModal = function (mapConfig) {
@@ -409,20 +378,6 @@ $(document).ready(function() {
         self.googleMap.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(document.getElementById('listPanel'));
 
         // Last timeout tracker used in addMarker
-        self.lastTimeout = null;
-        self.addMarker = function(marker) {
-            self.markers.push(marker);
-
-            // If there is a current timeout pending, stop it
-            //if (self.lastTimeout != null) {
-            //    clearTimeout(self.lastTimeout);
-            //}
-            // set a timeout to attachMarkers (drop markers on map with animation)
-            //self.lastTimeout = setTimeout(self.attachMarkers, 2000);
-            //self.attachMarkers();
-
-        };
-
         self.activeMarker = null;
 
         self.searchQuery = function (exploreObject) {
@@ -447,10 +402,9 @@ $(document).ready(function() {
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
                                     if (status == google.maps.StreetViewStatus.OK) {
                                         this.panoData = data.location.pano;
-                                        console.log('here');
                                     }
                                 }.bind(marker));
-                                self.addMarker(marker);
+                                self.markers.push(marker);
                             }
                             count++;
                             if (count == requestCount) {
