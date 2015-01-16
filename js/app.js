@@ -110,9 +110,9 @@ $(document).ready(function() {
         self.isWindowInfoOpen = ko.observable(false);
 
         // Update the marker's color when its state changes
-        this.isMouseOver.subscribe(this.updateColor, this);
-        this.isWindowInfoOpen.subscribe(this.updateColor, this);
-        this.isFocus.subscribe(this.updateColor, this);
+        self.isMouseOver.subscribe(this.updateColor, this);
+        self.isWindowInfoOpen.subscribe(this.updateColor, this);
+        self.isFocus.subscribe(this.updateColor, this);
 
         // Create a google marker with drop down animation
         self.googleMarker = new google.maps.Marker({
@@ -211,6 +211,7 @@ $(document).ready(function() {
     Marker.prototype.setMyMap = function (myMap) {
         this.attached.map = myMap;
         this.googleMarker.setMap(myMap.googleMap);
+        this.isVisible = true;
     };
 
     Marker.prototype.getMyMap = function () {
@@ -335,12 +336,26 @@ $(document).ready(function() {
 
         self.filterMarkers = ko.computed(function () {
             if (self.query().length == 0) {
+
+                for (var i = 0; i < self.markers().length; i++) {
+                    var gMarker = self.markers()[i].googleMarker;
+                    if (!gMarker.getVisible()) {
+                        gMarker.setVisible(true);
+                    }
+                }
+
                 return self.markers();
             } else {
                 return ko.utils.arrayFilter(self.markers(), function (marker) {
                     var query = self.query().toLowerCase();
                     var name = marker.name.toLowerCase();
-                    return (name.indexOf(query) >= 0)
+                    var gMarker = marker.googleMarker;
+                    var isVisible = (name.indexOf(query) >= 0);
+
+                    if (isVisible != gMarker.getVisible()) {
+                        gMarker.setVisible(isVisible);
+                    }
+                    return isVisible;
                 });
             }
         });
@@ -388,8 +403,6 @@ $(document).ready(function() {
         self.markers = ko.observableArray([]);
         self.listPanel = new ListPanel(self.markers);
 
-        self.googleMap.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(document.getElementById('listPanel'));
-
         // Last timeout tracker used in addMarker
         self.activeMarker = null;
 
@@ -404,6 +417,8 @@ $(document).ready(function() {
 
                     var requestCount = items.length;
                     var count = 0;
+
+                    var bounds = new google.maps.LatLngBounds();
                     for (var i = 0; i < items.length; i++) {
                         var venueId = items[i].venue.id;
                         // Get a more detailed venue for each item
@@ -417,10 +432,12 @@ $(document).ready(function() {
                                         this.panoData = data.location.pano;
                                     }
                                 }.bind(marker));
+                                bounds.extend(marker.googleMarker.getPosition());
                                 self.markers.push(marker);
                             }
-                            count++;
-                            if (count == requestCount) {
+
+                            if (++count == requestCount) {
+                                self.googleMap.fitBounds(bounds);
                                 self.attachMarkers();
                             }
                         });
@@ -440,7 +457,7 @@ $(document).ready(function() {
                 setTimeout((function(marker) {
                     return function () {
                         marker.setMyMap(self);
-                        //marker.focus();
+                        marker.focus();
                     };
                 })(marker),i * 100);
             }
