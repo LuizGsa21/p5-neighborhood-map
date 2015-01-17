@@ -33,23 +33,30 @@
 		</script>
 
 		<div id="listPanel" data-bind="with: listPanel">
-			<input id="listSearch" class="controls" placeholder="Search List…" type="text"
-			       data-bind="value: query, valueUpdate: 'keyup', visible: isVisible"
+			<input id="listSearch" class="controls" placeholder="" type="text"
+			       data-bind="
+			        value: query,
+			        valueUpdate: 'keyup',
+			        visible: isVisible,
+			        attr: { placeholder: listInfo }"
 			       autocomplete="off" />
 			<div id="type-selector" class="controls" data-bind="visible: isVisible">
-				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list"
-				       checked="checked">
-				<label for="filter-list">Filter List</label>
+				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list" checked="checked">
+				<label for="filter-list">Filter</label>
 
 				<input type="radio" name="type" value="search" data-bind="checked: radioOption" id="search-foursquare">
-				<label for="search-foursquare">Search Foursquare</label>
+				<label for="search-foursquare">Foursquare</label>
 
+				<div style="float: right">
+					<input type="checkbox" name="type" value="search" data-bind="checked: autoFocus" id="auto-hide">
+					<label for="auto-hide">Auto Focus</label>
+				</div>
 			</div>
 			<div  style="height: 95%" data-bind="visible: isVisible">
 				<ol type="1" class="list-items"
 				    data-bind="foreach: { data: filterMarkers, as: 'marker' }">
 					<li class="item" data-bind="event: {
-                        mouseover: mouseover,
+                        mouseover: mouseover.bind($data, $parent.autoFocus()),
                         mouseout: mouseout,
                         click: click
                       },

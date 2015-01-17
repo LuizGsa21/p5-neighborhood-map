@@ -141,16 +141,12 @@ $(document).ready(function() {
     // Static variable used to create unique id selectors
     // Examples: marker-1, marker-2
     Marker.idNumber = 0;
-
-    // z index to increment when bringing marker or infowindow to focus
-    Marker.zIndex = 0;
+    Marker.zIndex = 0; // z index to increment when bringing marker or infowindow to focus
 
     // Images for the marker's current state
-    // INACTIVE = red
+    // INACTIVE = red, HOVER = blue, ACTIVE = green
     Marker.prototype.INACTIVE = 'https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1';
-    // HOVER = blue
     Marker.prototype.HOVER = 'http://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-waypoint-blue.png&scale=1';
-    // ACTIVE = green
     Marker.prototype.ACTIVE = 'https://mt.google.com/vt/icon?psize=24&font=fonts/Roboto-Regular.ttf&color=ff330000&name=icons/spotlight/spotlight-waypoint-a.png&ax=44&ay=48&scale=1&text=•';
 
     /**
@@ -184,12 +180,22 @@ $(document).ready(function() {
         this.googleMarker.setIcon(color);
     };
 
-    Marker.prototype.mouseover = function () {
+    Marker.prototype.mouseover = function (autoFocus) {
         this.isMouseOver(true);
+        if (autoFocus === true) {
+            var map = this.attached.map;
+            if (map != null) {
+                map.centerOnMarker(this);
+            }
+        }
+        this.updateZIndex();
     };
 
     Marker.prototype.mouseout = function () {
         this.isMouseOver(false);
+        if (!this.isWindowInfoOpen() && this.isFocus()) {
+            this.isFocus(false);
+        }
     };
 
     /**
@@ -202,7 +208,7 @@ $(document).ready(function() {
         }
     };
 
-    Marker.prototype.focus = function () {
+    Marker.prototype.updateZIndex = function () {
         var zIndex = Marker.zIndex++;
         this.googleMarker.setZIndex(zIndex);
         this.attached.infoWindow.setZIndex(zIndex);
@@ -211,24 +217,17 @@ $(document).ready(function() {
     Marker.prototype.setMyMap = function (myMap) {
         this.attached.map = myMap;
         this.googleMarker.setMap(myMap.googleMap);
-        this.isVisible = true;
-    };
-
-    Marker.prototype.getMyMap = function () {
-        return this.attached.map;
     };
 
     /**
-     * Creates marker's infoWindow content using the
-     * html template (#infoWindowTemplate)
+     * Creates the marker's infoWindow content using the
+     * html template (#foursquareTemplate)
      *
      * @returns {HTMLElement} - infowindow content
      */
     Marker.prototype.getInfoWindowcontent = function () {
         var content = $('#foursquareTemplate').html();
 
-        //var height = (this.panoData != null) ? '330px;' : '300px;';
-        //content = content.replace('{{style}}', 'height:' + height);
         var rating;
         if (this.rating != undefined) {
             rating = ['<strong>Rating: </strong>',this.rating].join('');
@@ -270,11 +269,9 @@ $(document).ready(function() {
 
     };
 
-
     Marker.prototype.loadInfoWindowContent = function () {
         this.attached.infoWindow.setContent(this.getInfoWindowcontent());
     };
-
 
     /**
      * Sets a click listener to the third parent of infoWindow element.
@@ -330,16 +327,33 @@ $(document).ready(function() {
 
         var self = this;
         self.isVisible = ko.observable(true);
+
         self.markers = observableMarkers;
 
         self.query = ko.observable('');
 
         self.radioOption = ko.observable('filter');
 
+        self.autoFocus = ko.observable(false);
+
+        self.listInfo = ko.computed(function () {
+            if (self.radioOption() === 'filter') {
+                return 'Filter List...';
+            } else {
+                return 'Search Foursquare...'
+            }
+        });
+
+        self.lastOpenedMarker = null;
+
         self.filterMarkers = ko.computed(function () {
+
             if (self.query().length == 0 || self.radioOption() != 'filter') {
+
                 for (var i = 0; i < self.markers().length; i++) {
+
                     var gMarker = self.markers()[i].googleMarker;
+
                     if (!gMarker.getVisible()) {
                         gMarker.setVisible(true);
                     }
@@ -348,13 +362,16 @@ $(document).ready(function() {
                 return self.markers();
             } else {
                 return ko.utils.arrayFilter(self.markers(), function (marker) {
-                    var query = self.query().toLowerCase();
+                    var queryText = self.query().toLowerCase();
                     var name = marker.name.toLowerCase();
-                    var gMarker = marker.googleMarker;
-                    var isVisible = (name.indexOf(query) >= 0);
+                    var isVisible = (name.indexOf(queryText) >= 0);
 
+                    var gMarker = marker.googleMarker;
                     if (isVisible != gMarker.getVisible()) {
                         gMarker.setVisible(isVisible);
+                        if (!isVisible) {
+                            marker.closeInfoWindow();
+                        }
                     }
                     return isVisible;
                 });
@@ -389,7 +406,7 @@ $(document).ready(function() {
         self.googleMap = new google.maps.Map(document.getElementById(mapConfig.canvasId), mapConfig.options);
 
         // Initialize google services
-        self.placeService = new google.maps.places.PlacesService(self.googleMap);
+        //self.placeService = new google.maps.places.PlacesService(self.googleMap);
         self.streetViewService = new google.maps.StreetViewService();
 
         // Create foursquare service object
@@ -399,6 +416,7 @@ $(document).ready(function() {
           '20140806', // version
           'foursquare' // mode
         );
+
 
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
@@ -458,7 +476,7 @@ $(document).ready(function() {
                 setTimeout((function(marker) {
                     return function () {
                         marker.setMyMap(self);
-                        marker.focus();
+                        marker.updateZIndex();
                     };
                 })(marker),i * 100);
             }
@@ -471,13 +489,19 @@ $(document).ready(function() {
         };
 
         self.setActiveMarker = function (marker) {
-            if (self.activeMarker != null) {
+
+            self.centerOnMarker(marker);
+
+            if (!marker.isWindowInfoOpen()) {
+                marker.openInfoWindow();
+                marker.updateZIndex();
+            }
+            if (self.activeMarker != null && marker != self.activeMarker) {
+                self.activeMarker.isFocus(false);
                 self.activeMarker.closeInfoWindow();
             }
-            marker.focus();
-            marker.openInfoWindow();
-            self.activeMarker = marker;
 
+            self.activeMarker = marker;
         };
 
         // Keeps map centered when being resized
@@ -495,7 +519,6 @@ $(document).ready(function() {
 
 
     };
-
 
     ko.applyBindings(new MapViewModal(mapConfig));
 });

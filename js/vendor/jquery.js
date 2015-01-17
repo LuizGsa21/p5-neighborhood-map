@@ -1909,7 +1909,7 @@
                       return elem === docElem;
                   },
 
-                  "focus": function( elem ) {
+                  "updateZIndex": function( elem ) {
                       return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
                   },
 
@@ -4832,12 +4832,12 @@
                 // Prevent triggered image.load events from bubbling to window.load
                 noBubble: true
             },
-            focus: {
+            updateZIndex: {
                 // Fire native event if possible so blur/focus sequence is correct
                 trigger: function() {
-                    if ( this !== safeActiveElement() && this.focus ) {
+                    if ( this !== safeActiveElement() && this.updateZIndex ) {
                         try {
-                            this.focus();
+                            this.updateZIndex();
                             return false;
                         } catch ( e ) {
                             // Support: IE<9
@@ -5157,7 +5157,7 @@
 
 // Create "bubbling" focus and blur events
     if ( !support.focusinBubbles ) {
-        jQuery.each({ focus: "focusin", blur: "focusout" }, function( orig, fix ) {
+        jQuery.each({ updateZIndex: "focusin", blur: "focusout" }, function( orig, fix ) {
 
             // Attach a single capturing handler on the document while someone wants focusin/focusout
             var handler = function( event ) {

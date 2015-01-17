@@ -79,7 +79,6 @@ body,
 
 .phone {
     float: right;
-    /*clear: both;*/
     margin-top: 0;
 }
 
@@ -244,23 +243,14 @@ button {
     font-weight: 300;
 }
 
-@media screen and (max-width: 768px)  {
-    #search-container {
-        margin-top: 0;
+@media screen and (max-width: 480px)  {
+    #listPanel {
         width: 100%;
-        min-width: 400px;
+        margin: 0;
     }
-    .btn-panel {
-        padding: 7px 15px;
-        font-size: 15px;
-    }
-    .list-items, .btn-panel {
-        width: 230px;
-    }
-
-    .btn-panel {
-        height: 35px;
-    }
-
 }
 
+#auto-hide {
+    /*float: right;*/
+    text-align: right;
+}
