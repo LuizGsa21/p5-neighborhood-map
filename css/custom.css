@@ -20,20 +20,6 @@ body,
     font-family: 'Roboto';
 }
 
-/* Fix infoWindow scroll bug */
-.gm-style-iw div {
-    /*line-height:1.35;*/
-    /*line-height: normal;*/
-    /*overflow: auto;*/
-    /*overflow:hidden;*/
-    /*white-space:nowrap;*/
-}
-/* ./scroll bug */
-
-
-
-
-
 .panorama {
     height: 70%;
     width: 100%;
@@ -45,10 +31,9 @@ body,
     width: 100%;
 }
 
-
 .gm-style-iw {
-    margin: 0;
-    padding: 0;
+    /*margin: 0;*/
+    /*padding: 0;*/
 }
 
 
@@ -125,8 +110,8 @@ body,
 }
 /* list panel */
 #listPanel {
-    width: 340px;
-    height: 400px;
+    width: 380px;
+    height: 450px;
     z-index: 3;
     position: fixed;
     bottom: 0;
@@ -135,10 +120,15 @@ body,
 }
 
 #listSearch {
-    height: 10%;
     width: 100%;
-    padding-left: 10px;
-    font-size: 1em;
+    background-color: #fff;
+    margin: 0;
+    font-family: Roboto;
+    font-size: 15px;
+    font-weight: 300;
+    text-overflow: ellipsis;
+    float: left;
+    padding-left: 15px;
 }
 
 #listSearch:focus {
@@ -203,6 +193,7 @@ body,
     position: absolute;
     height: 10%;
     bottom: 0;
+
 }
 
 .glyphicon-minimize {
@@ -218,13 +209,42 @@ button {
     outline: none;
 }
 
+/** Top search bar **/
+.controls {
+    margin-top: 16px;
+    border: 1px solid transparent;
+    border-radius: 2px 0 0 2px;
+    height: 32px;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#search-container {
+    position: fixed;
+    left: 50%;
+    width: 746px;
+    top: 20px;
+    transform: translate(-50%, 0);
+    z-index: 3;
+}
+
+#type-selector {
+    margin: 0;
+    padding: 5px 11px 0px 11px;
+    width: 100%;
+    color: #fff;
+    background-image: linear-gradient(rgb(94, 148, 255) 0%, rgb(85, 140, 251) 100%);
+    float: left;
+}
+
+
+#type-selector label {
+    font-family: Roboto;
+    font-size: 13px;
+    font-weight: 300;
+}
 
 @media screen and (max-width: 768px)  {
-    #pac-input, #type-selector {
-        clear: both;
-        width: 100%;
-        min-width: 400px;
-    }
     #search-container {
         margin-top: 0;
         width: 100%;

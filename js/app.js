@@ -334,9 +334,10 @@ $(document).ready(function() {
 
         self.query = ko.observable('');
 
-        self.filterMarkers = ko.computed(function () {
-            if (self.query().length == 0) {
+        self.radioOption = ko.observable('filter');
 
+        self.filterMarkers = ko.computed(function () {
+            if (self.query().length == 0 || self.radioOption() != 'filter') {
                 for (var i = 0; i < self.markers().length; i++) {
                     var gMarker = self.markers()[i].googleMarker;
                     if (!gMarker.getVisible()) {

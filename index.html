@@ -31,14 +31,24 @@
 				</div>
 			</div>
 		</script>
+
 		<div id="listPanel" data-bind="with: listPanel">
-			<input id="listSearch" placeholder="Search List…" type="text"
+			<input id="listSearch" class="controls" placeholder="Search List…" type="text"
 			       data-bind="value: query, valueUpdate: 'keyup', visible: isVisible"
 			       autocomplete="off" />
-			<ol type="1" class="list-items"
-			    data-bind="visible: isVisible,
-                    foreach: { data: filterMarkers, as: 'marker' }">
-				<li class="item" data-bind="event: {
+			<div id="type-selector" class="controls" data-bind="visible: isVisible">
+				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list"
+				       checked="checked">
+				<label for="filter-list">Filter List</label>
+
+				<input type="radio" name="type" value="search" data-bind="checked: radioOption" id="search-foursquare">
+				<label for="search-foursquare">Search Foursquare</label>
+
+			</div>
+			<div  style="height: 95%" data-bind="visible: isVisible">
+				<ol type="1" class="list-items"
+				    data-bind="foreach: { data: filterMarkers, as: 'marker' }">
+					<li class="item" data-bind="event: {
                         mouseover: mouseover,
                         mouseout: mouseout,
                         click: click
@@ -46,8 +56,9 @@
                       css: {active: isMouseOver() || isFocus()},
                       attr: { id: $index() },
                       text: name">
-				</li>
-			</ol>
+					</li>
+				</ol>
+			</div>
 			<button class="btn-panel"
 			        data-bind="click: toggle.bind($data)">
 				<span data-bind="text: title "></span><a href="#" class="glyphicon-minimize"></a>
