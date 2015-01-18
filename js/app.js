@@ -175,8 +175,9 @@ $(document).ready(function() {
         var marker = this.googleMarker;
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
-        this.attached.infoWindow.setContent(fragment);
-        this.attached.infoWindow.open(marker.getMap(), marker);
+        this.loadModal(fragment);
+        //this.attached.infoWindow.setContent(fragment);
+        //this.attached.infoWindow.open(marker.getMap(), marker);
     };
 
     Marker.prototype.updateColor = function () {
@@ -318,12 +319,28 @@ $(document).ready(function() {
         }
     };
 
+    Marker.prototype.loadModal = function(contents) {
+
+        console.log('here');
+        $($('.modal-title').get(0)).html($(contents).find('#title')[0]);
+        $($('.modal-body').get(0)).html(contents);
+
+
+        $('#myModal').modal('show');
+
+        //this.panorama.setPosition(this.googleMarker.getPosition());
+        //this.panorama.setPano(this.panoData);
+        //this.panorama.setVisible(true);
+
+
+
+
+    };
+
     /**
      * Sets a click listener to the third parent of infoWindow element.
      */
     Marker.prototype.onDOMInfoWindowReady = function () {
-
-        var panoDiv = document.getElementById(this.panoId);
 
         // Edit google's generated element to expand infoWindow content
         var container = $('#' + this.markerId).parents()[0];
@@ -339,7 +356,6 @@ $(document).ready(function() {
             }
         }
 
-        this.attached.infoWindow.getPosition();
     };
 
     var ListPanel = function (map) {
@@ -352,7 +368,7 @@ $(document).ready(function() {
 
         self.searchBar = ko.observable('');
 
-        self.radioOption = ko.observable('filter');
+        self.radioOption = ko.observable('search');
 
         self.autoFocus = ko.observable(false);
 

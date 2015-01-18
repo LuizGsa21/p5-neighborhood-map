@@ -18,7 +18,7 @@
 	<body>
 		<div id="map-canvas"></div>
 
-		<div class="modal fade">
+		<div class="modal fade" id="myModal">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
@@ -39,7 +39,7 @@
 		<!-- Info window template -->
 		<script type="text/html" id="foursquareTemplate">
 			<div onselectstart="return true;" id="{{id}}" class="placeInfo">
-				<h2 class="text-center">{{title}}</h2>
+				<h2 id="title" class="text-center">{{title}}</h2>
 				<div class="foursquare">
 					<div class="contactInfo">
 						<p class="address"><strong>Location:</strong><br>{{address}}</p>
@@ -63,11 +63,12 @@
 			        event: {keypress: searchInput}"
 			       autocomplete="off" />
 			<div id="type-selector" class="controls" data-bind="visible: isVisible">
-				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list" checked="checked">
-				<label for="filter-list">Filter</label>
 
 				<input type="radio" name="type" value="search" data-bind="checked: radioOption" id="search-foursquare">
 				<label for="search-foursquare">Foursquareer</label>
+
+				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list">
+				<label for="filter-list">Filter</label>
 
 				<div class="pull-right">
 					<input type="checkbox" name="type" value="search" data-bind="checked: autoFocus" id="auto-hide">
