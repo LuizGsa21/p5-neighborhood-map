@@ -173,7 +173,9 @@ $(document).ready(function() {
     Marker.prototype.openInfoWindow = function() {
         this.isInfoWindowOpen(true);
         var marker = this.googleMarker;
-        this.attached.infoWindow.setContent(this.getInfoWindowcontent());
+        var fragment = this.getInfoWindowcontent();
+        this.attachPano(fragment);
+        this.attached.infoWindow.setContent(fragment);
         this.attached.infoWindow.open(marker.getMap(), marker);
     };
 
@@ -281,12 +283,39 @@ $(document).ready(function() {
         div.innerHTML = content;
         var fragment = div.childNodes[1];
 
-        var height = (this.panoData != null) ? '360px' : '200px';
+        var height = (this.panoData != null) ? '370px' : '200px';
         fragment.style.height = height;
 
         return fragment;
 
 
+    };
+
+    Marker.prototype.attachPano = function(fragment) {
+        //var panoDiv = document.getElementById(this.panoId);
+        var panoDiv = $(fragment).find('#' + this.panoId)[0];
+
+        // Append panorama view to fragment
+        if (this.panoData != null) {
+            //Pano custom options
+            var panoOptions = {
+                navigationControl: true,
+                enableCloseButton: false,
+                addressControl: false,
+                linksControl: false,
+                visible: false,
+                pano: this.panoData,
+                navigationControlOptions: { style: google.maps.NavigationControlStyle.ANDROID }
+            };
+            //add pano to infowindow
+            this.panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
+            //this.panorama.setPosition(this.googleMarker.getPosition());
+            //this.panorama.setVisible(true);
+            //this.panorama.setPano(this.panoData);
+        } else {
+            //$(panoDiv).css("height", "50px",'position','relative');
+            $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
+        }
     };
 
     /**
@@ -300,28 +329,9 @@ $(document).ready(function() {
         var container = $('#' + this.markerId).parents()[0];
         $(container).css('width', '100%');
 
-        // Append panorama view to fragment
-        if (this.panoData != null) {
-            //Pano custom options
-            var panoOptions = {
-                navigationControl: true,
-                enableCloseButton: false,
-                addressControl: false,
-                linksControl: false,
-                visible: true,
-                pano: this.panoData,
-                navigationControlOptions: { style: google.maps.NavigationControlStyle.ANDROID }
-            };
-            //add pano to infowindow
-            this.panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
-            //this.panorama.setPosition(this.googleMarker.getPosition());
-            //this.panorama.setVisible(true);
-
-        } else {
-            //$(panoDiv).css("height", "50px",'position','relative');
-            $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
+        if (this.panorama) {
+            this.panorama.setVisible(true);
         }
-
         if (window.getSelection) {
             var sel = window.getSelection();
             if (sel.collapseToEnd) {
