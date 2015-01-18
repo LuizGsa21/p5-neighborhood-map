@@ -193,7 +193,6 @@ $(document).ready(function() {
         this.isMouseOver(true);
 
         // If hover is from map
-        console.log(autoFocus);
         if (autoFocus.latLng) {
             // auto scroll to list item
             $('#list-items').scrollTo('#'+this.id, 200);
@@ -209,7 +208,7 @@ $(document).ready(function() {
 
     Marker.prototype.mouseout = function () {
 
-        // Cancel any autoscroll event
+        // Cancel any autoscroll events
         $('#list-items').stop(true, false);
 
         this.isMouseOver(false);
@@ -235,9 +234,7 @@ $(document).ready(function() {
     };
 
     Marker.prototype.setMyMap = function (myMap) {
-
         var googleMap = (myMap) ? myMap.googleMap : null;
-
         this.attached.map = myMap;
         this.googleMarker.setMap(googleMap);
     };
