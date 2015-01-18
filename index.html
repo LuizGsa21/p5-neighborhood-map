@@ -8,7 +8,7 @@
 		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1szx1heFDJTMTvu1EvowyBQb2ib-kfJI&libraries=places"></script>
 		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>-->
 		<script src="js/vendor/jquery.js"></script>
-		<!--<script src="js/vendor/jquery.scrollTo.min.js"></script>-->
+		<script src="js/vendor/jquery.scrollTo.min.js"></script>
 		<script src="js/vendor/knockout-3.2.0.debug.js"></script>
 
 		<script src="js/app.js"></script>
@@ -18,7 +18,7 @@
 
 		<!-- Info window template -->
 		<script type="text/html" id="foursquareTemplate">
-			<div id="{{id}}" class="placeInfo">
+			<div onselectstart="return true;" id="{{id}}" class="placeInfo">
 				<h2 class="text-center">{{title}}</h2>
 				<div class="foursquare">
 					<div class="contactInfo">
@@ -32,10 +32,11 @@
 			</div>
 		</script>
 
-		<div id="listPanel" data-bind="with: listPanel">
+		<div id="listPanel"
+		     data-bind="with: listPanel, css: {hidden: !listPanel.isVisible()}">
 			<input id="listSearch" class="controls" placeholder="" type="text"
 			       data-bind="
-			        value: query,
+			        value: searchBar,
 			        valueUpdate: 'keyup',
 			        visible: isVisible,
 			        attr: { placeholder: listInfo }"
@@ -47,16 +48,16 @@
 				<input type="radio" name="type" value="search" data-bind="checked: radioOption" id="search-foursquare">
 				<label for="search-foursquare">Foursquare</label>
 
-				<div style="float: right">
+				<div class="pull-right">
 					<input type="checkbox" name="type" value="search" data-bind="checked: autoFocus" id="auto-hide">
 					<label for="auto-hide">Auto Focus</label>
 				</div>
 			</div>
-			<div  style="height: 95%" data-bind="visible: isVisible">
-				<ol type="1" class="list-items"
+			<div  style="height: 76%; width: 100%; overflow: hidden" data-bind="visible: isVisible">
+				<ol type="1" id="list-items"
 				    data-bind="foreach: { data: filterMarkers, as: 'marker' }">
 					<li class="item" data-bind="event: {
-                        mouseover: mouseover.bind($data, $parent.autoFocus()),
+                        mouseover: mouseover.bind($data, $parent.autoFocus(), $index()),
                         mouseout: mouseout,
                         click: click
                       },

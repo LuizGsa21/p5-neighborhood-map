@@ -812,7 +812,7 @@
                               if ( elem && elem.parentNode ) {
                                   // Handle the case where IE, Opera, and Webkit return items
                                   // by name instead of ID
-                                  if ( elem.id === m ) {
+                                  if ( elem.markerId === m ) {
                                       results.push( elem );
                                       return results;
                                   }
@@ -822,7 +822,7 @@
                           } else {
                               // Context is not a document
                               if ( context.ownerDocument && (elem = context.ownerDocument.getElementById( m )) &&
-                                contains( context, elem ) && elem.id === m ) {
+                                contains( context, elem ) && elem.markerId === m ) {
                                   results.push( elem );
                                   return results;
                               }
@@ -1113,7 +1113,7 @@
               // The broken getElementById methods don't pick up programatically-set names,
               // so use a roundabout getElementsByName test
               support.getById = assert(function( div ) {
-                  docElem.appendChild( div ).id = expando;
+                  docElem.appendChild( div ).markerId = expando;
                   return !doc.getElementsByName || !doc.getElementsByName( expando ).length;
               });
 
@@ -1902,7 +1902,7 @@
                   // Miscellaneous
                   "target": function( elem ) {
                       var hash = window.location && window.location.hash;
-                      return hash && hash.slice( 1 ) === elem.id;
+                      return hash && hash.slice( 1 ) === elem.markerId;
                   },
 
                   "root": function( elem ) {
@@ -2826,7 +2826,7 @@
                       if ( elem && elem.parentNode ) {
                           // Handle the case where IE and Opera return items
                           // by name instead of ID
-                          if ( elem.id !== match[2] ) {
+                          if ( elem.markerId !== match[2] ) {
                               return rootjQuery.find( selector );
                           }
 
@@ -8120,7 +8120,7 @@
         };
 
         // Some attributes are constructed with empty-string values when not defined
-        attrHandle.id = attrHandle.name = attrHandle.coords =
+        attrHandle.markerId = attrHandle.name = attrHandle.coords =
           function( elem, name, isXML ) {
               var ret;
               if ( !isXML ) {

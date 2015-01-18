@@ -32,10 +32,7 @@ body,
 }
 
 .gm-style-iw {
-    /*margin: 0;*/
-    /*padding: 0;*/
 }
-
 
 /* ---------- Info Window CSS */
 /* container  */
@@ -100,6 +97,10 @@ body,
 .hide {
     display: none;
 }
+.hidden {
+    height: auto !important;
+}
+
 /* ---- ./convenience */
 
 
@@ -109,6 +110,7 @@ body,
 }
 /* list panel */
 #listPanel {
+    /*outline: 1px solid red;*/
     width: 380px;
     height: 450px;
     z-index: 3;
@@ -116,6 +118,7 @@ body,
     bottom: 0;
     margin-left: 20px;
     margin-bottom: 20px;
+    background: none;
 }
 
 #listSearch {
@@ -134,19 +137,19 @@ body,
     outline: 0;
 }
 
-.list-items {
+#list-items {
     list-style-position: inside;
     background-color: white;
     overflow-y: scroll;
     overflow-x: hidden;
     width: 100%;
-    height: 80%;
+    height: 100%;
     padding-left: 0;
     margin: 0;
     border: 1px solid #4d90fe;
 }
 
-.list-items li {
+#list-items li {
     height: 45px;
     line-height: 45px;
     font-size: 16px;
@@ -157,24 +160,24 @@ body,
     text-overflow: ellipsis;
 }
 
-.list-items li:hover, .active {
+#list-items li:hover, .active {
     color: #4d90fe;
     border: 1px solid #4d90fe;
     padding: 1px 0 0 9px;
 
 }
 
-.list-items::-webkit-scrollbar {
+#list-items::-webkit-scrollbar {
     width: 12px;
 }
-.list-items::-webkit-scrollbar-track {
+#list-items::-webkit-scrollbar-track {
     background-color: #eaeaea;
     border-left: 1px solid #ccc;
 }
-.list-items::-webkit-scrollbar-thumb {
+#list-items::-webkit-scrollbar-thumb {
     background-color: #ccc;
 }
-.list-items::-webkit-scrollbar-thumb:hover {
+#list-items::-webkit-scrollbar-thumb:hover {
     background-color: #aaa;
 }
 
@@ -191,6 +194,7 @@ body,
     width: 100%;
     position: absolute;
     height: 10%;
+    min-height: 45px;
     bottom: 0;
 
 }
@@ -248,9 +252,4 @@ button {
         width: 100%;
         margin: 0;
     }
-}
-
-#auto-hide {
-    /*float: right;*/
-    text-align: right;
 }

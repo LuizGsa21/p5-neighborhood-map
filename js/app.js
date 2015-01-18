@@ -86,8 +86,9 @@ $(document).ready(function() {
 
         var self = this;
 
-        self.id = 'marker-' + Marker.idNumber;
-        self.panoId = 'pano-' + Marker.idNumber++;
+        self.id = Marker.idNumber++;
+        self.markerId = 'marker-' + self.id;
+        self.panoId = 'pano-' + self.id;
 
         self.name = vResponse.name;
         self.contact = vResponse.contact;
@@ -107,11 +108,11 @@ $(document).ready(function() {
         // observables to keep track of marker's state
         self.isFocus = ko.observable(false);
         self.isMouseOver = ko.observable(false);
-        self.isWindowInfoOpen = ko.observable(false);
+        self.isInfoWindowOpen = ko.observable(false);
 
         // Update the marker's color when its state changes
         self.isMouseOver.subscribe(this.updateColor, this);
-        self.isWindowInfoOpen.subscribe(this.updateColor, this);
+        self.isInfoWindowOpen.subscribe(this.updateColor, this);
         self.isFocus.subscribe(this.updateColor, this);
 
         // Create a google marker with drop down animation
@@ -134,7 +135,7 @@ $(document).ready(function() {
         google.maps.event.addListener(self.googleMarker, 'mouseout', self.mouseout.bind(this));
 
         google.maps.event.addListener(self.attached.infoWindow, 'domready', self.onDOMInfoWindowReady.bind(this));
-        google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {self.isWindowInfoOpen(false);});
+        google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {self.isInfoWindowOpen(false);});
 
     };
 
@@ -153,24 +154,20 @@ $(document).ready(function() {
      * Close info window if its open
      */
     Marker.prototype.closeInfoWindow = function() {
-        if (this.isWindowInfoOpen()) {
-            this.attached.infoWindow.close();
-            this.isWindowInfoOpen(false);
-        }
+        this.isInfoWindowOpen(false);
+        this.attached.infoWindow.close();
     };
 
     Marker.prototype.openInfoWindow = function() {
-        if (!this.isWindowInfoOpen()) {
-            var marker = this.googleMarker;
-            this.loadInfoWindowContent();
-            this.attached.infoWindow.open(marker.getMap(), marker);
-            this.isWindowInfoOpen(true);
-        }
+        this.isInfoWindowOpen(true);
+        var marker = this.googleMarker;
+        this.attached.infoWindow.setContent(this.getInfoWindowcontent());
+        this.attached.infoWindow.open(marker.getMap(), marker);
     };
 
     Marker.prototype.updateColor = function () {
         var color = '';
-        if (this.isWindowInfoOpen()) {
+        if (this.isInfoWindowOpen()) {
             color = this.ACTIVE;
         } else if (this.isMouseOver()) {
             color = this.HOVER;
@@ -182,18 +179,30 @@ $(document).ready(function() {
 
     Marker.prototype.mouseover = function (autoFocus) {
         this.isMouseOver(true);
-        if (autoFocus === true) {
+
+        console.log(autoFocus);
+        console.log(this);
+        // If hover is from map
+        if (autoFocus.latLng) {
+            // auto scroll to list item
+            $('#list-items').scrollTo('#'+this.id, 200);
+
+        } else if (autoFocus === true) { // If hover is from list-item
             var map = this.attached.map;
             if (map != null) {
-                map.centerOnMarker(this);
+                map.centerOnMarker(this.googleMarker.getPosition());
+                this.updateZIndex();
             }
         }
-        this.updateZIndex();
     };
 
     Marker.prototype.mouseout = function () {
+
+        // Cancel any autoscroll event
+        $('#list-items').stop(true, false);
+
         this.isMouseOver(false);
-        if (!this.isWindowInfoOpen() && this.isFocus()) {
+        if (!this.isInfoWindowOpen() && this.isFocus()) {
             this.isFocus(false);
         }
     };
@@ -253,7 +262,7 @@ $(document).ready(function() {
         content = content.replace('{{title}}', title);
         content = content.replace('{{rating}}', rating);
         content = content.replace('{{panoId}}', this.panoId);
-        content = content.replace('{{id}}', this.id);
+        content = content.replace('{{id}}', this.markerId);
         content = content.replace('{{panoramaClass}}', (this.panoData != null) ? 'panorama' : 'no-panorama');
         content = content.replace('{{phone}}',  this.contact.formattedPhone);
 
@@ -269,10 +278,6 @@ $(document).ready(function() {
 
     };
 
-    Marker.prototype.loadInfoWindowContent = function () {
-        this.attached.infoWindow.setContent(this.getInfoWindowcontent());
-    };
-
     /**
      * Sets a click listener to the third parent of infoWindow element.
      */
@@ -280,8 +285,8 @@ $(document).ready(function() {
 
         var panoDiv = document.getElementById(this.panoId);
 
-        // Edit google's generated element to center infoWindow content
-        var container = $('#' + this.id).parents()[0];
+        // Edit google's generated element to expand infoWindow content
+        var container = $('#' + this.markerId).parents()[0];
         $(container).css('width', '100%');
 
         // Append panorama view to fragment
@@ -306,31 +311,25 @@ $(document).ready(function() {
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
         }
 
-        // InfoWindow sometimes highlights entire div text when opening.
-        // Solution: clear text selection when infoWindow opens
-        // Code taken from: http://stackoverflow.com/questions/3169786/clear-text-selection-with-javascript
         if (window.getSelection) {
-            if (window.getSelection().empty) {  // Chrome
-                window.getSelection().empty();
-            } else if (window.getSelection().removeAllRanges) {  // Firefox
-                window.getSelection().removeAllRanges();
+            var sel = window.getSelection();
+            if (sel.collapseToEnd) {
+                sel.collapseToEnd();
             }
-        } else if (document.selection) {  // IE?
-            document.selection.empty();
         }
 
-
-
+        this.attached.infoWindow.getPosition();
     };
 
-    var ListPanel = function (observableMarkers) {
+    var ListPanel = function (map) {
 
         var self = this;
+        self.map = map;
         self.isVisible = ko.observable(true);
 
-        self.markers = observableMarkers;
+        self.markers = map.markers;
 
-        self.query = ko.observable('');
+        self.searchBar = ko.observable('');
 
         self.radioOption = ko.observable('filter');
 
@@ -344,35 +343,56 @@ $(document).ready(function() {
             }
         });
 
-        self.lastOpenedMarker = null;
-
         self.filterMarkers = ko.computed(function () {
 
-            if (self.query().length == 0 || self.radioOption() != 'filter') {
+            var activeMarker = self.map.activeMarker;
 
+            if (self.searchBar().length == 0 || self.radioOption() != 'filter') {
+
+                // Make every marker visible
                 for (var i = 0; i < self.markers().length; i++) {
-
                     var gMarker = self.markers()[i].googleMarker;
 
                     if (!gMarker.getVisible()) {
+                        // Reopene infoWindow
                         gMarker.setVisible(true);
-                    }
-                }
-
-                return self.markers();
-            } else {
-                return ko.utils.arrayFilter(self.markers(), function (marker) {
-                    var queryText = self.query().toLowerCase();
-                    var name = marker.name.toLowerCase();
-                    var isVisible = (name.indexOf(queryText) >= 0);
-
-                    var gMarker = marker.googleMarker;
-                    if (isVisible != gMarker.getVisible()) {
-                        gMarker.setVisible(isVisible);
-                        if (!isVisible) {
-                            marker.closeInfoWindow();
+                        if (activeMarker != null) {
+                            activeMarker.openInfoWindow();
                         }
                     }
+                }
+                return self.markers();
+
+            } else {
+                return ko.utils.arrayFilter(self.markers(), function (marker) {
+                    // Compare the marker's name with search bar text
+                    var text = self.searchBar().toLowerCase();
+                    var name = marker.name.toLowerCase();
+
+                    var isVisible = (name.indexOf(text) >= 0);
+
+                    var gMarker = marker.googleMarker;
+
+                    // Update google marker only if needed
+                    if (gMarker.getVisible() != isVisible) {
+
+                        gMarker.setVisible(isVisible);
+
+                        // Reopen infoWindow if it was closed by this filter
+                        if (isVisible && activeMarker == marker) {
+                            marker.openInfoWindow();
+                        } else if (marker.isInfoWindowOpen()) {
+
+                            // Keep track of infoWindow that is closed by this filter
+                            // So if the user cancels his filter we can reopen his last
+                            // infoWindow
+                            activeMarker = marker;
+                            marker.closeInfoWindow();
+                        }
+
+
+                    }
+
                     return isVisible;
                 });
             }
@@ -406,7 +426,6 @@ $(document).ready(function() {
         self.googleMap = new google.maps.Map(document.getElementById(mapConfig.canvasId), mapConfig.options);
 
         // Initialize google services
-        //self.placeService = new google.maps.places.PlacesService(self.googleMap);
         self.streetViewService = new google.maps.StreetViewService();
 
         // Create foursquare service object
@@ -420,7 +439,9 @@ $(document).ready(function() {
 
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
-        self.listPanel = new ListPanel(self.markers);
+
+        // Create a list panel
+        self.listPanel = new ListPanel(self);
 
         // Last timeout tracker used in addMarker
         self.activeMarker = null;
@@ -429,7 +450,6 @@ $(document).ready(function() {
 
             // Get items from search
             self.fsService.explore(exploreObject, function(data) {
-
                 if (data.meta.code === 200) {
 
                     var items = data.response.groups[0].items;
@@ -442,6 +462,7 @@ $(document).ready(function() {
                         var venueId = items[i].venue.id;
                         // Get a more detailed venue for each item
                         self.fsService.venueDetails(venueId, function(data) {
+
 
                             if (data.meta.code === 200) {
                                 // Create a marker object
@@ -483,22 +504,25 @@ $(document).ready(function() {
         };
 
         // Centers map on marker
-        self.centerOnMarker = function (marker) {
-            self.googleMap.panTo(marker.googleMarker.getPosition());
-            marker.isFocus(true);
+        self.centerOnMarker = function (position) {
+            self.googleMap.panTo(position);
         };
 
         self.setActiveMarker = function (marker) {
 
-            self.centerOnMarker(marker);
+            // close previous marker
+            if (self.activeMarker != null && self.activeMarker != marker) {
+                self.activeMarker.closeInfoWindow();
+                self.activeMarker.isFocus(false);
+            }
 
-            if (!marker.isWindowInfoOpen()) {
+            // Toggle marker infoWindow
+            if (marker.isInfoWindowOpen()) {
+                marker.closeInfoWindow();
+            } else {
                 marker.openInfoWindow();
                 marker.updateZIndex();
-            }
-            if (self.activeMarker != null && marker != self.activeMarker) {
-                self.activeMarker.isFocus(false);
-                self.activeMarker.closeInfoWindow();
+                self.centerOnMarker(marker.googleMarker.getPosition());
             }
 
             self.activeMarker = marker;
