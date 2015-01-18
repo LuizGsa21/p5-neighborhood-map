@@ -17,6 +17,7 @@ $(document).ready(function() {
         }
     };
 
+
     var FourSquareService = function (appId, secretKey, version, mode) {
 
         var self = this;
@@ -77,6 +78,17 @@ $(document).ready(function() {
                 fail: response
             });
 
+        };
+
+        self.queryTextToObject  = function(queryText) {
+            var end = queryText.indexOf('near');
+            var query = queryText.substring(0, end).trim();
+            var location = queryText.substring(end + 4).trim();
+
+            return {
+                query: query,
+                near: location
+            };
         };
 
     };
@@ -180,9 +192,8 @@ $(document).ready(function() {
     Marker.prototype.mouseover = function (autoFocus) {
         this.isMouseOver(true);
 
-        console.log(autoFocus);
-        console.log(this);
         // If hover is from map
+        console.log(autoFocus);
         if (autoFocus.latLng) {
             // auto scroll to list item
             $('#list-items').scrollTo('#'+this.id, 200);
@@ -224,8 +235,11 @@ $(document).ready(function() {
     };
 
     Marker.prototype.setMyMap = function (myMap) {
+
+        var googleMap = (myMap) ? myMap.googleMap : null;
+
         this.attached.map = myMap;
-        this.googleMarker.setMap(myMap.googleMap);
+        this.googleMarker.setMap(googleMap);
     };
 
     /**
@@ -303,8 +317,8 @@ $(document).ready(function() {
             };
             //add pano to infowindow
             this.panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
-            this.panorama.setPosition(this.googleMarker.getPosition());
-            this.panorama.setVisible(true);
+            //this.panorama.setPosition(this.googleMarker.getPosition());
+            //this.panorama.setVisible(true);
 
         } else {
             //$(panoDiv).css("height", "50px",'position','relative');
@@ -324,9 +338,9 @@ $(document).ready(function() {
     var ListPanel = function (map) {
 
         var self = this;
-        self.map = map;
         self.isVisible = ko.observable(true);
 
+        self.map = map;
         self.markers = map.markers;
 
         self.searchBar = ko.observable('');
@@ -334,6 +348,7 @@ $(document).ready(function() {
         self.radioOption = ko.observable('filter');
 
         self.autoFocus = ko.observable(false);
+
 
         self.listInfo = ko.computed(function () {
             if (self.radioOption() === 'filter') {
@@ -390,14 +405,26 @@ $(document).ready(function() {
                             marker.closeInfoWindow();
                         }
 
-
                     }
-
                     return isVisible;
                 });
             }
         });
 
+        self.searchInput = function(data, event) {
+
+            // Make query when user hits the enter key,
+            if (event.keyCode === 13 && self.radioOption() == 'search' ) { // make sure search radio button is selected
+
+                // Get foursquare service
+                var fs = self.map.fsService;
+                // Create a query object from the input text
+                var queryObj = fs.queryTextToObject(self.searchBar());
+                // make query
+                self.map.searchQuery(queryObj);
+            }
+            return true;
+        };
 
         // The list panel title
         self.title = ko.pureComputed(function () {
@@ -436,7 +463,6 @@ $(document).ready(function() {
           'foursquare' // mode
         );
 
-
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
 
@@ -448,27 +474,37 @@ $(document).ready(function() {
 
         self.searchQuery = function (exploreObject) {
 
-            // Get items from search
+            // Clear the map before making a new query
+            self.removeMarkers();
+
+            // Get venue items from query
             self.fsService.explore(exploreObject, function(data) {
                 if (data.meta.code === 200) {
 
+                    // extract items
                     var items = data.response.groups[0].items;
 
                     var requestCount = items.length;
                     var count = 0;
 
                     var bounds = new google.maps.LatLngBounds();
+
+                    // Use the venue id of each item to make venueDetails request
                     for (var i = 0; i < items.length; i++) {
                         var venueId = items[i].venue.id;
+
                         // Get a more detailed venue for each item
                         self.fsService.venueDetails(venueId, function(data) {
 
 
                             if (data.meta.code === 200) {
-                                // Create a marker object
+                                // Create a marker from venue object
                                 var marker = new Marker(data.response.venue);
+
+                                // Check if google map has a panorama view for this location
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
                                     if (status == google.maps.StreetViewStatus.OK) {
+                                        // save pano
                                         this.panoData = data.location.pano;
                                     }
                                 }.bind(marker));
@@ -491,6 +527,7 @@ $(document).ready(function() {
 
         // Attaches each marker with i * 100 delay, i = marker's array index
         self.attachMarkers = function () {
+
             for(var i = 0; i < self.markers().length; i++) {
                 var marker = self.markers()[i];
                 // set timeout animation
@@ -528,6 +565,17 @@ $(document).ready(function() {
             self.activeMarker = marker;
         };
 
+        self.removeMarkers = function () {
+
+            var markers = self.markers.removeAll();
+
+            for (var i = 0; i < markers.length; i++) {
+                var marker = markers.pop();
+                marker.setMyMap(null);
+                marker.googleMarker = null;
+            }
+
+        };
         // Keeps map centered when being resized
         google.maps.event.addDomListener(window, 'resize', function() {
             var center = self.googleMap.getCenter();
@@ -535,14 +583,11 @@ $(document).ready(function() {
             //self.map.fitBounds(self.currentBounds);
             self.googleMap.setCenter(center);
         });
-
-
-        // default search query when map is first initialized
-        self.searchQuery(mapConfig.explore);
-
-
-
     };
 
-    ko.applyBindings(new MapViewModal(mapConfig));
+
+
+    var mapViewModal = new MapViewModal(mapConfig);
+    mapViewModal.searchQuery(mapConfig.explore);
+    ko.applyBindings(mapViewModal);
 });

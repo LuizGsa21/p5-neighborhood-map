@@ -39,7 +39,8 @@
 			        value: searchBar,
 			        valueUpdate: 'keyup',
 			        visible: isVisible,
-			        attr: { placeholder: listInfo }"
+			        attr: { placeholder: listInfo },
+			        event: {keypress: searchInput}"
 			       autocomplete="off" />
 			<div id="type-selector" class="controls" data-bind="visible: isVisible">
 				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list" checked="checked">
