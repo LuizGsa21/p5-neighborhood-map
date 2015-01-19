@@ -367,7 +367,9 @@ hr {
 }
 .modal-title {
   margin: 0;
+  text-align: center;
   line-height: 1.42857143;
+  font-size: 1.2em;
 }
 .modal-body {
   position: relative;

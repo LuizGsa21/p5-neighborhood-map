@@ -284,7 +284,7 @@ $(document).ready(function() {
         div.innerHTML = content;
         var fragment = div.childNodes[1];
 
-        var height = (this.panoData != null) ? '370px' : '200px';
+        var height = (this.panoData != null) ? '100%' : '200px';
         fragment.style.height = height;
 
         return fragment;
@@ -321,16 +321,19 @@ $(document).ready(function() {
 
     Marker.prototype.loadModal = function(contents) {
 
-        console.log('here');
-        $($('.modal-title').get(0)).html($(contents).find('#title')[0]);
+        console.log(contents);
+
+
+        $($('.modal-title').get(0)).html($(contents).find('#title'));
         $($('.modal-body').get(0)).html(contents);
+        //$($('.modal-body').get(0)).prepend(contents);
 
 
         $('#myModal').modal('show');
 
         //this.panorama.setPosition(this.googleMarker.getPosition());
         //this.panorama.setPano(this.panoData);
-        //this.panorama.setVisible(true);
+        this.panorama.setVisible(true);
 
 
 

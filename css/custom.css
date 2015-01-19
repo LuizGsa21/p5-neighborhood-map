@@ -16,7 +16,6 @@ body,
     width: 100%;
     margin: 0px;
     padding: 0px;
-    min-width: 400px;
     font-family: 'Roboto';
 }
 
@@ -45,7 +44,8 @@ body,
 .foursquare {
     position: relative;
     line-height: 1.4em;
-    height: 80%;
+    height: 100%;
+    /*height: 80%;*/
 }
 
 
@@ -56,10 +56,15 @@ body,
 .contactInfo {
     width: 100%;
     min-height: 100px;
+    padding-top: 10px;
 }
 .address {
     display: inline-block;
     float: left;
+}
+
+#title {
+    /*margin: 0;*/
 }
 
 .moreInfo-link {
@@ -106,13 +111,14 @@ body,
 
 
 #listPanel * {
-    /*outline: 1px solid red;*/
+    outline: 1px solid red;
 }
 /* list panel */
 #listPanel {
-    /*outline: 1px solid red;*/
+    outline: 1px solid red;
     width: 380px;
-    height: 450px;
+    min-height: 45px;
+    max-height: 450px;
     z-index: 3;
     position: fixed;
     bottom: 0;
@@ -143,7 +149,7 @@ body,
     overflow-y: scroll;
     overflow-x: hidden;
     width: 100%;
-    height: 100%;
+    max-height: 300px;
     padding-left: 0;
     margin: 0;
     border: 1px solid #4d90fe;
@@ -158,6 +164,7 @@ body,
     font-family: 'Roboto';
     font-weight: 300;
     text-overflow: ellipsis;
+
 }
 
 #list-items li:hover, .active {
@@ -192,10 +199,11 @@ body,
     display: block;
     cursor: pointer;
     width: 100%;
-    position: absolute;
-    height: 10%;
-    min-height: 45px;
-    bottom: 0;
+    position: relative;
+    /*height: 10%;*/
+    /*min-height: 45px;*/
+    height: 45px;
+    /*bottom: 0;*/
 
 }
 
@@ -251,5 +259,81 @@ button {
     #listPanel {
         width: 100%;
         margin: 0;
+        max-height: 100%;
+    }
+
+    #title {
+        margin: 0%;
+    }
+
+    #list-items {
+        height: 300px;
+    }
+
+    .btn-panel {
+        border-radius: 0;
+        height: 45px;
+
     }
 }
+
+
+@media screen and (max-width: 320px)  {
+    .placeInfo {
+        min-width: 280px;
+        white-space: nowrap;
+    }
+
+    .contactInfo {
+        height: 40%;
+    }
+
+    .contactInfo p {
+        max-width: 50%;
+        white-space: pre;
+    }
+    .panorama {
+        height: 60%;
+
+    }
+
+    #title a {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        overflow: hidden;
+    }
+}
+
+.panorama {
+    width: 100%;
+}
+
+.modal-dialog {
+    width: 98%;
+    height: 98%;
+    margin: 1%;
+    padding: 0;
+}
+
+
+.modal-content {
+    width: 100%;
+    height: 100%;
+}
+
+.modal-header {
+    padding-bottom: 0;
+}
+.modal-body {
+    width: 100%;
+    height: 75%;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.modal-header button {
+    float: left;
+}
+
+

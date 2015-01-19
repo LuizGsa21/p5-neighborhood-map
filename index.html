@@ -23,14 +23,12 @@
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-						<h4 class="modal-title">Modal title</h4>
+						<div class="modal-title"></div>
 					</div>
 					<div class="modal-body">
-						<p>One fine body&hellip;</p>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-primary">Save changes</button>
 					</div>
 				</div><!-- /.modal-content -->
 			</div><!-- /.modal-dialog -->
@@ -38,7 +36,7 @@
 
 		<!-- Info window template -->
 		<script type="text/html" id="foursquareTemplate">
-			<div onselectstart="return true;" id="{{id}}" class="placeInfo">
+			<div id="{{id}}" class="placeInfo">
 				<h2 id="title" class="text-center">{{title}}</h2>
 				<div class="foursquare">
 					<div class="contactInfo">
@@ -52,15 +50,15 @@
 			</div>
 		</script>
 
-		<div id="listPanel"
-		     data-bind="with: listPanel, css: {hidden: !listPanel.isVisible()}">
+		<div id="listPanel" data-bind="with: listPanel">
 			<input id="listSearch" class="controls" placeholder="" type="text"
 			       data-bind="
 			        value: searchBar,
 			        valueUpdate: 'keyup',
 			        visible: isVisible,
 			        attr: { placeholder: listInfo },
-			        event: {keypress: searchInput}"
+			        event: {keypress: searchInput},
+			        css: {hidden: isVisible"
 			       autocomplete="off" />
 			<div id="type-selector" class="controls" data-bind="visible: isVisible">
 
