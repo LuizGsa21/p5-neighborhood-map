@@ -20,20 +20,17 @@ body,
 }
 
 .panorama {
-    height: 70%;
+    height: 63%;
     width: 100%;
     display: block;
 }
 
 .no-panorama {
-    height: 50px;
-    width: 100%;
+    text-align: center;
 }
 
-.gm-style-iw {
-}
+/** Info Window CSS **/
 
-/* ---------- Info Window CSS */
 /* container  */
 .placeInfo {
     min-width: 300px;
@@ -45,35 +42,29 @@ body,
     position: relative;
     line-height: 1.4em;
     height: 100%;
-    /*height: 80%;*/
 }
 
-
-.contactInfo p {
-    margin: 0.5em 0 0.2em 0;
-
-}
 .contactInfo {
     width: 100%;
     min-height: 100px;
     padding-top: 10px;
 }
+
+.contactInfo p {
+    margin: 0.5em 0 0.2em 0;
+}
+
 .address {
     display: inline-block;
     float: left;
 }
 
 #title {
-    /*margin: 0;*/
+    margin: 0;
 }
 
-.moreInfo-link {
-    text-align: right;
-    float:right;
-    clear: right;
-}
 
-.rating {
+.rating, .moreInfo-link {
     text-align: right;
     float: right;
     clear: right;
@@ -84,38 +75,8 @@ body,
     margin-top: 0;
 }
 
-
-/* ---- ./foursquare contents */
-/* ---------- ./ Info Window CSS */
-
-
-/* convenience classes */
-.text-right {
-    text-align: right;
-}
-.text-center {
-    text-align: center;
-}
-.pull-right {
-    float: right;
-}
-.hide {
-    display: none;
-}
-.hidden {
-    height: auto !important;
-}
-
-/* ---- ./convenience */
-
-
-
-#listPanel * {
-    outline: 1px solid red;
-}
-/* list panel */
+/** List Panel **/
 #listPanel {
-    outline: 1px solid red;
     width: 380px;
     min-height: 45px;
     max-height: 450px;
@@ -164,6 +125,8 @@ body,
     font-family: 'Roboto';
     font-weight: 300;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 
 }
 
@@ -255,15 +218,38 @@ button {
     font-weight: 300;
 }
 
+/** ./List Panel **/
+
+
+/* convenience classes */
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.pull-right {
+    float: right;
+}
+
+.hide {
+    display: none;
+}
+
+/*.hidden {*/
+/*height: auto !important;*/
+/*}*/
+
+/* ---- ./convenience */
+
+
 @media screen and (max-width: 480px)  {
     #listPanel {
         width: 100%;
         margin: 0;
         max-height: 100%;
-    }
-
-    #title {
-        margin: 0%;
     }
 
     #list-items {
@@ -275,10 +261,7 @@ button {
         height: 45px;
 
     }
-}
 
-
-@media screen and (max-width: 320px)  {
     .placeInfo {
         min-width: 280px;
         white-space: nowrap;
@@ -303,37 +286,30 @@ button {
         display: block;
         overflow: hidden;
     }
+
+    .modal-dialog {
+        width: 98%;
+        height: 98%;
+        margin: 1%;
+        padding: 0;
+    }
+
+    .modal-content {
+        width: 100%;
+        height: 100%;
+    }
+
+    .modal-header {
+        padding-bottom: 0;
+    }
+    .modal-body {
+        width: 100%;
+        height: 75%;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .modal-header button {
+        float: left;
+    }
 }
-
-.panorama {
-    width: 100%;
-}
-
-.modal-dialog {
-    width: 98%;
-    height: 98%;
-    margin: 1%;
-    padding: 0;
-}
-
-
-.modal-content {
-    width: 100%;
-    height: 100%;
-}
-
-.modal-header {
-    padding-bottom: 0;
-}
-.modal-body {
-    width: 100%;
-    height: 75%;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-.modal-header button {
-    float: left;
-}
-
-

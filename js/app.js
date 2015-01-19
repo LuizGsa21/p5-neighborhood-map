@@ -167,6 +167,7 @@ $(document).ready(function() {
      */
     Marker.prototype.closeInfoWindow = function() {
         this.isInfoWindowOpen(false);
+        this.panorama = null;
         this.attached.infoWindow.close();
     };
 
@@ -175,9 +176,13 @@ $(document).ready(function() {
         var marker = this.googleMarker;
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
-        this.loadModal(fragment);
-        //this.attached.infoWindow.setContent(fragment);
-        //this.attached.infoWindow.open(marker.getMap(), marker);
+        if ($(document).width() > 480) {
+            this.attached.infoWindow.setContent(fragment);
+            this.attached.infoWindow.open(marker.getMap(), marker);
+        } else {
+            this.loadModal(fragment);
+        }
+
     };
 
     Marker.prototype.updateColor = function () {
@@ -284,7 +289,9 @@ $(document).ready(function() {
         div.innerHTML = content;
         var fragment = div.childNodes[1];
 
-        var height = (this.panoData != null) ? '100%' : '200px';
+
+        var minH = ($(document).width() > 480) ? '360px' : '100%';
+        var height = (this.panoData != null) ? minH : '200px';
         fragment.style.height = height;
 
         return fragment;
