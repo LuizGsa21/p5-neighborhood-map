@@ -5,7 +5,7 @@ $(document).ready(function() {
         canvasId: 'map-canvas',
         panelId: 'myPanel',
         options: {
-            center: { lat: 30.4089018, lng: -91.0602644 },
+            center: { lat: 30.433723460, lng: -91.12495604 },
             zoom: 12,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             disableDefaultUI: true,
@@ -172,26 +172,24 @@ $(document).ready(function() {
      * Close info window if its open
      */
     Marker.prototype.closeInfoWindow = function() {
+        this.isInfoWindowOpen(false);
+        this.isFocus(false);
 
         var $modal = $('#myModal');
         if ($modal.hasClass('in')) {
+            console.log('modal');
             $modal.modal('hide');
         } else {
+            console.log('close');
             this.attached.infoWindow.close();
         }
 
-        // If this marker is the map's active marker
-        // update the map
-        //var map = this.attached.map;
-        //if (map !== null && map.activeMarker === this) {
-        //    map.activeMarker = null;
-        //}
-        this.isInfoWindowOpen(false);
-        this.isFocus(false);
+
     };
 
     Marker.prototype.openInfoWindow = function() {
-
+        this.isInfoWindowOpen(true);
+        this.isFocus(true);
 
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
@@ -218,13 +216,6 @@ $(document).ready(function() {
             }.bind(this));
         }
 
-        var map = this.attached.map;
-        if (map !== null && map.activeMarker !== this) {
-            map.activeMarker = this;
-        }
-
-        this.isInfoWindowOpen(true);
-        this.isFocus(true);
     };
 
     Marker.prototype.updateColor = function () {
@@ -410,29 +401,61 @@ $(document).ready(function() {
 
     };
 
-    Marker.prototype.toggleInfoWindow = function () {
-        if (this.isInfoWindowOpen()) {
-            this.closeInfoWindow();
-        } else {
-            this.openInfoWindow();
-        }
-    };
-
     var ListPanel = function (map) {
 
         var self = this;
-        self.isVisible = ko.observable(false);
 
+        // List panel visible state
+        // setting this to false collapses the list panel
+        self.isVisible = ko.observable(true);
+
+        // collapses/expands list panel
+        self.toggle = function () {
+            self.isVisible(!self.isVisible());
+        };
+
+        // The list panel title
+        self.title = ko.pureComputed(function () {
+            return self.isVisible() ? 'Hide List' : 'Show List';
+        });
+
+        // The attaches map
         self.map = map;
+        // Markers currently on map
         self.markers = map.markers;
 
+        // Search bar used to make foursquare queries and filter map markers
         self.searchBar = ko.observable('');
 
-        self.radioOption = ko.observable('search');
-
+        // When checked, listpanel will auto focus map on the hovered list item (marker).
         self.autoFocus = ko.observable(false);
 
+        // search bar radio button
+        // value: search, uses search bar input to make foursquare query when user presses enter
+        // value filter, uses search bar input to filter markers on the map and listpanel
+        self.radioOption = ko.observable('search');
 
+        // When changing radioOption value from filter to search, make sure all markers are
+        // visible on the map and reopen active marker if needed
+        self.radioOption.subscribe(function (option) {
+            if (option === 'search') {
+                var activeMarker = self.map.activeMarker;
+                // Make every marker visible on map
+                for (var i = 0; i < self.markers().length; i++) {
+                    var gMarker = self.markers()[i].googleMarker;
+
+                    if (!gMarker.getVisible()) {
+                        gMarker.setVisible(true);
+                    }
+                }
+                // Reopene infoWindow if needed
+                if (activeMarker != null && !activeMarker.isInfoWindowOpen()) {
+                    activeMarker.openInfoWindow();
+                }
+            }
+        });
+
+        // ListPanel searchbar placeholder to display, value changes when radioOption is changed
         self.listInfo = ko.computed(function () {
             if (self.radioOption() === 'filter') {
                 return 'Filter List...';
@@ -441,59 +464,59 @@ $(document).ready(function() {
             }
         });
 
+        /**
+         * Markers to display on list panel and map.
+         *
+         * If radio option is equal to 'search', it will simply return self.markers(),
+         * else it will filter through the array and hide the appropriate markers,
+         * while still keeping infoWindow in sync.
+         * @type {KnockoutComputed<T>}
+         */
         self.filterMarkers = ko.computed(function () {
 
             var activeMarker = self.map.activeMarker;
 
-            if (self.searchBar().length == 0 || self.radioOption() != 'filter') {
-
-
-                // Make every marker visible
-                for (var i = 0; i < self.markers().length; i++) {
-                    var gMarker = self.markers()[i].googleMarker;
-
-                    if (!gMarker.getVisible()) {
-                        // Reopene infoWindow
-                        gMarker.setVisible(true);
-                    }
-                }
-
-                if (activeMarker != null && !activeMarker.isInfoWindowOpen()) {
-                    activeMarker.openInfoWindow();
-                }
+            if (self.radioOption() === 'search')
                 return self.markers();
-
-            } else {
+            else
                 return ko.utils.arrayFilter(self.markers(), function (marker) {
                     // Compare the marker's name with search bar text
                     var text = self.searchBar().toLowerCase();
                     var name = marker.name.toLowerCase();
 
+                    // get this marker's new visible value
                     var isVisible = (name.indexOf(text) >= 0);
 
                     var gMarker = marker.googleMarker;
 
-                    // Update google marker only if needed
+                    // Update marker only if needed
                     if (gMarker.getVisible() != isVisible) {
 
                         gMarker.setVisible(isVisible);
-
+                        // Check if this marker is active
                         if (activeMarker === marker) {
-                            if (isVisible != marker.isInfoWindowOpen()) {
-                                marker.toggleInfoWindow();
+
+                            var isActiveVisible = marker.isInfoWindowOpen();
+                            // Open/close infoWindow only if needed
+                            if (isVisible) {
+                                if (!isActiveVisible)   // show infoWindow if its closed
+                                    marker.openInfoWindow();
+                            } else {
+                                if (isActiveVisible) // close infoWindow if its open
+                                    marker.closeInfoWindow();
                             }
                         }
                     }
                     return isVisible;
                 });
-            }
         });
 
-        self.searchInput = function(data, event) {
-
-            // Make query when user hits the enter key,
-            if (event.keyCode === 13 && self.radioOption() == 'search' ) { // make sure search radio button is selected
-
+        // Make a foursquare query when user presses enter key
+        self.searchBarInput = function(data, event) { // called by the search bar on 'keyup' event
+            // If keyCode != enter key,
+            if (event.keyCode !== 13) {
+                return true;
+            } else if (self.radioOption() == 'search') { // make sure search radio button is selected
                 // Get foursquare service
                 var fs = self.map.fsService;
                 // Create a query object from the input text
@@ -503,27 +526,13 @@ $(document).ready(function() {
             }
             return true;
         };
-
-        // The list panel title
-        self.title = ko.pureComputed(function () {
-            return self.isVisible() ? 'Hide List' : 'Show List';
-        });
-
-        self.close =  function () {
-            self.isVisible(false);
-        };
-
-        self.open = function () {
-            self.isVisible(true);
-        };
-
-        self.toggle = function () {
-            self.isVisible(!self.isVisible());
-        };
-
-
     };
 
+    /**
+     * Creates a map from the given mapConfig.
+     * @param mapConfig - map initialier object
+     * @constructor
+     */
     var MapViewModal = function (mapConfig) {
         var self = this;
 
@@ -550,6 +559,11 @@ $(document).ready(function() {
         // Last timeout tracker used in addMarker
         self.activeMarker = null;
 
+        /**
+         * Makes a foursquare query with the given object, then
+         * creates and attaches markers to the map with the received data
+         * @param exploreObject - the given object
+         */
         self.searchQuery = function (exploreObject) {
 
             // Clear the map before making a new query
@@ -580,17 +594,16 @@ $(document).ready(function() {
                                 // Create a marker from venue object
                                 var marker = new Marker(data.response.venue);
 
+                                // attach marker on map
                                 marker.setMyMap(self);
+                                // add marker to observable array to sync map markers with listPanel
                                 self.markers.push(marker);
-                                //marker.updateZIndex();
-
-                                // Add markers to map using synced queue
-                                //resultsArray.push(marker);
+                                marker.updateZIndex();
 
                                 // Check if google map has a panorama view for this location
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
                                     if (status == google.maps.StreetViewStatus.OK) {
-                                        // save pano
+                                        // save pano to marker
                                         this.panoData = data.location.pano;
                                     }
                                 }.bind(marker));
@@ -598,8 +611,9 @@ $(document).ready(function() {
                             }
 
                             if (++count == requestCount) {
+                                // Update map bounds after retreiving all the markers
                                 self.googleMap.fitBounds(bounds);
-                                //self.attachMarkers(resultsArray);
+                                console.log(bounds.getCenter());
                             }
                         });
 
@@ -615,27 +629,36 @@ $(document).ready(function() {
             self.googleMap.panTo(position);
         };
 
+        /**
+         * This method gets called by the clicked marker.
+         * If the clicked marker is equal to the maps active marker, close its infoWindow and set active marker to null.
+         * else close previous marker and make the clicked marker active.
+         * @param marker - the clicked marker
+         */
         self.setActiveMarker = function (marker) {
 
-
-            // close previous marker
-            if (self.activeMarker != null && self.activeMarker != marker) {
-                self.activeMarker.isFocus(false);
-                self.activeMarker.closeInfoWindow();
-            }
-
-            // Toggle marker infoWindow
-            if (marker.isInfoWindowOpen()) {
+            // if they're the same close infoWindow and set active marker to null
+            if (self.activeMarker === marker) {
                 marker.closeInfoWindow();
+                self.activeMarker = null;
             } else {
+
+                if (self.activeMarker !== null) // close previous active marker
+                    self.activeMarker.closeInfoWindow();
+
+                self.activeMarker = marker; // set new active marker
+
+                // open marker's infoWindow and center it on map
                 marker.openInfoWindow();
-                marker.updateZIndex();
-                self.centerOnMarker(marker.googleMarker.getPosition());
+                self.activeMarker.updateZIndex();
+                self.centerOnMarker(self.activeMarker.googleMarker.getPosition());
             }
 
-            self.activeMarker = marker;
         };
 
+        /**
+         * Removes the attached markers from this map
+         */
         self.removeMarkers = function () {
             var markers = self.markers.removeAll();
             var marker;
@@ -656,7 +679,7 @@ $(document).ready(function() {
         // Change infoWindow to display as a modal or google's infoWindow depending on the browser's width
         window.addEventListener('resize', function () {
 
-            // get browser mode
+            // get browser current mode using media query to gaurantee precision
             var mql = window.matchMedia("screen and (min-width: 768px)");
             var displayMode = mql.matches;
 
@@ -666,8 +689,8 @@ $(document).ready(function() {
 
                 var marker = self.activeMarker;
                 if (marker !== null) {
-                    marker.closeInfoWindow();
-                    marker.openInfoWindow();
+                    marker.closeInfoWindow(); // close current infoWindow (modal or google's infowindow)
+                    marker.openInfoWindow(); // reopen
                 }
             }
 
@@ -677,8 +700,11 @@ $(document).ready(function() {
 
     };
 
+    // Create a mapViewModal
     var mapViewModal = new MapViewModal(mapConfig);
-    mapViewModal.searchQuery(mapConfig.explore);
     ko.applyBindings(mapViewModal);
+    // Make initial query
+    mapViewModal.searchQuery(mapConfig.explore);
+
 
 });

@@ -270,8 +270,8 @@ button {
     .modal-dialog {
         width: 98%;
         height: 98%;
-        margin: 1%;
-        padding: 0;
+        margin: 0 auto;
+        padding: 1%;
     }
 
     .modal-content {
