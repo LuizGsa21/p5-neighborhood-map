@@ -110,6 +110,7 @@ $(document).ready(function() {
         self.fsWebsite = vResponse.canonicalUrl;
 
         self.panoData = null;
+        self.displayState = '';
 
         // objects that get attached to this marker
         self.attached = {
@@ -147,7 +148,15 @@ $(document).ready(function() {
         google.maps.event.addListener(self.googleMarker, 'mouseout', self.mouseout.bind(this));
 
         google.maps.event.addListener(self.attached.infoWindow, 'domready', self.onDOMInfoWindowReady.bind(this));
-        google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {self.isInfoWindowOpen(false);});
+        google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {
+            var map = self.attached.map;
+            console.log('closeclick');
+            if (map !== null && map.activeMarker === self) {
+                map.activeMarker = null;
+                console.log('null');
+            }
+            self.closeInfoWindow();
+        });
 
     };
 
@@ -167,8 +176,14 @@ $(document).ready(function() {
      */
     Marker.prototype.closeInfoWindow = function() {
         this.isInfoWindowOpen(false);
-        this.panorama = null;
         this.attached.infoWindow.close();
+        this.displayState = '';
+        //// If this marker is the map's active marker
+        //// update the map
+        //var map = this.attached.map;
+        //if (map !== null && map.activeMarker === this) {
+        //    map.activeMarker = null;
+        //}
     };
 
     Marker.prototype.openInfoWindow = function() {
@@ -176,13 +191,26 @@ $(document).ready(function() {
         var marker = this.googleMarker;
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
+
         if ($(document).width() > 480) {
+            this.displayState = 'infoWindow';
             this.attached.infoWindow.setContent(fragment);
             this.attached.infoWindow.open(marker.getMap(), marker);
         } else {
+            this.displayState = 'modal';
             this.loadModal(fragment);
+            this.isMouseOver(false); // fixes the marker's color on mobile devices
+            // Unbind listener when myModal closes
+            $('#myModal').on('hide.bs.modal', function(e) {
+                this.isInfoWindowOpen(false);
+                $('#myModal').unbind();
+            }.bind(this));
         }
 
+        var map = this.attached.map;
+        if (map !== null && map.activeMarker !== this) {
+            map.activeMarker = this;
+        }
     };
 
     Marker.prototype.updateColor = function () {
@@ -290,6 +318,7 @@ $(document).ready(function() {
         var fragment = div.childNodes[1];
 
 
+        // set height depending
         var minH = ($(document).width() > 480) ? '360px' : '100%';
         var height = (this.panoData != null) ? minH : '200px';
         fragment.style.height = height;
@@ -328,9 +357,6 @@ $(document).ready(function() {
 
     Marker.prototype.loadModal = function(contents) {
 
-        console.log(contents);
-
-
         $($('.modal-title').get(0)).html($(contents).find('#title'));
         $($('.modal-body').get(0)).html(contents);
         //$($('.modal-body').get(0)).prepend(contents);
@@ -340,7 +366,10 @@ $(document).ready(function() {
 
         //this.panorama.setPosition(this.googleMarker.getPosition());
         //this.panorama.setPano(this.panoData);
-        this.panorama.setVisible(true);
+        console.log(this.panorama);
+        if (this.panorama != null) {
+            this.panorama.setVisible(true);
+        }
 
 
 
@@ -352,8 +381,8 @@ $(document).ready(function() {
      */
     Marker.prototype.onDOMInfoWindowReady = function () {
 
-        // Edit google's generated element to expand infoWindow content
-        var container = $('#' + this.markerId).parents()[0];
+        // Edit google's generated element to expand infoWindow content 100%
+        var container = $('.gm-style-iw')[0].firstChild;
         $(container).css('width', '100%');
 
         if (this.panorama) {
@@ -366,6 +395,14 @@ $(document).ready(function() {
             }
         }
 
+    };
+
+    Marker.prototype.toggleInfoWindow = function () {
+        if (this.isInfoWindowOpen()) {
+            this.closeInfoWindow();
+        } else {
+            this.openInfoWindow();
+        }
     };
 
     var ListPanel = function (map) {
@@ -397,6 +434,7 @@ $(document).ready(function() {
 
             if (self.searchBar().length == 0 || self.radioOption() != 'filter') {
 
+
                 // Make every marker visible
                 for (var i = 0; i < self.markers().length; i++) {
                     var gMarker = self.markers()[i].googleMarker;
@@ -404,10 +442,11 @@ $(document).ready(function() {
                     if (!gMarker.getVisible()) {
                         // Reopene infoWindow
                         gMarker.setVisible(true);
-                        if (activeMarker != null) {
-                            activeMarker.openInfoWindow();
-                        }
                     }
+                }
+
+                if (activeMarker != null) {
+                    activeMarker.openInfoWindow();
                 }
                 return self.markers();
 
@@ -426,18 +465,11 @@ $(document).ready(function() {
 
                         gMarker.setVisible(isVisible);
 
-                        // Reopen infoWindow if it was closed by this filter
-                        if (isVisible && activeMarker == marker) {
-                            marker.openInfoWindow();
-                        } else if (marker.isInfoWindowOpen()) {
-
-                            // Keep track of infoWindow that is closed by this filter
-                            // So if the user cancels his filter we can reopen his last
-                            // infoWindow
-                            activeMarker = marker;
-                            marker.closeInfoWindow();
+                        if (activeMarker === marker) {
+                            if (isVisible != marker.isInfoWindowOpen()) {
+                                marker.toggleInfoWindow();
+                            }
                         }
-
                     }
                     return isVisible;
                 });
@@ -582,8 +614,8 @@ $(document).ready(function() {
 
             // close previous marker
             if (self.activeMarker != null && self.activeMarker != marker) {
-                self.activeMarker.closeInfoWindow();
                 self.activeMarker.isFocus(false);
+                self.activeMarker.closeInfoWindow();
             }
 
             // Toggle marker infoWindow
@@ -616,6 +648,30 @@ $(document).ready(function() {
             //self.map.fitBounds(self.currentBounds);
             self.googleMap.setCenter(center);
         });
+
+        // Change infoWindow to display a modal if window width <= 480
+        window.addEventListener("resize", function () {
+
+            var marker = self.activeMarker;
+
+            if (marker !== null && marker.isInfoWindowOpen()) {
+
+                if (window.outerWidth <= 480) {
+                    if (marker.displayState !== 'modal') {
+                        marker.closeInfoWindow();
+                        marker.openInfoWindow();
+                    }
+                } else {
+                    if (marker.displayState !== 'infoWindow') {
+                        $('#myModal').modal('hide');
+                        marker.closeInfoWindow();
+                        marker.openInfoWindow();
+                    }
+                }
+
+            }
+        }, false);
+
     };
 
 
@@ -623,4 +679,32 @@ $(document).ready(function() {
     var mapViewModal = new MapViewModal(mapConfig);
     mapViewModal.searchQuery(mapConfig.explore);
     ko.applyBindings(mapViewModal);
+
+    // Detect if user is using a mobile phone
+    // http://stackoverflow.com/questions/3514784/what-is-the-best-way-to-detect-a-mobile-device-in-jquery
+    //if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+
+        // Locks scroll if device is in landscape
+        var scrollLockLandscape = function () {
+            if (window.outerWidth > window.outerHeight) {
+                window.scrollTo(1, 1);
+                $('#landscape').show();
+                // lock scroll
+                $(document).bind("touchmove", function (event) {
+                    event.preventDefault();
+                });
+            } else {
+                $('#landscape').hide();
+                // unlock scroll
+                $(document).unbind("touchmove");
+            }
+        };
+
+        //scrollLockLandscape();
+        // http://tech.sarathdr.com/featured/prevent-landscape-orientation-of-iphone-web-apps/
+        window.addEventListener('resize', function () {
+            //scrollLockLandscape();
+        }, false);
+    }
 });

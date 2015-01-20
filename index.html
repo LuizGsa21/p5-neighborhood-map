@@ -10,7 +10,7 @@
 		<script src="js/vendor/jquery.scrollTo.min.js"></script>
 		<script src="js/vendor/knockout-3.2.0.debug.js"></script>
 		<link rel="stylesheet" href="css/bootstrap.css"/>
-		<link rel="stylesheet" href="css/bootstrap-theme.css"/>
+		<!--<link rel="stylesheet" href="css/bootstrap-theme.css"/>-->
 		<link rel="stylesheet" href="css/custom.css"/>
 		<script src="js/vendor/bootstrap.js"></script>
 		<script src="js/app.js"></script>
@@ -37,13 +37,15 @@
 		<!-- Info window template -->
 		<script type="text/html" id="foursquareTemplate">
 			<div id="{{id}}" class="placeInfo">
-				<h2 id="title" class="text-center">{{title}}</h2>
+				<h2 id="title" class="text-align-center">{{title}}</h2>
 				<div class="foursquare">
 					<div class="contactInfo">
-						<p class="address"><strong>Location:</strong><br>{{address}}</p>
-						<p class="phone"><strong>Phone: </strong>{{phone}}</p>
-						<p class="rating">{{rating}}</p>
-						<p class="moreInfo-link">{{info}}</p>
+							<div style="width: 100%">
+								<p class="address"><strong>Location:</strong><br>{{address}}</p>
+								<p class="phone"><strong>Phone: </strong>{{phone}}</p>
+								<p class="rating">{{rating}}</p>
+								<p class="moreInfo-link">{{info}}</p>
+							</div>
 					</div>
 					<div id="{{panoId}}" class="{{panoramaClass}}"></div>
 				</div>
@@ -93,6 +95,8 @@
 			</button>
 		</div>
 
+
+		<div id="landscape"><p><b>Rotate Device to Portrait</b></p></div>
 		<div id="preload" style="display: none;">
 			<img src="https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1" width="1" height="1" alt="Image 01" />
 			<img src="http://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-waypoint-blue.png&scale=1" width="1" height="1" alt="Image 02" />
