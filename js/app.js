@@ -229,9 +229,6 @@ $(document).ready(function() {
 
     Marker.prototype.updateColor = function () {
 
-        // wait until map animation is done before updating the marker's color
-        if (!this.attached.map.isAnimationDone) return;
-
         var color = '';
         if (this.isInfoWindowOpen()) {
             color = this.ACTIVE;
@@ -424,7 +421,7 @@ $(document).ready(function() {
     var ListPanel = function (map) {
 
         var self = this;
-        self.isVisible = ko.observable(true);
+        self.isVisible = ko.observable(false);
 
         self.map = map;
         self.markers = map.markers;
@@ -440,7 +437,7 @@ $(document).ready(function() {
             if (self.radioOption() === 'filter') {
                 return 'Filter List...';
             } else {
-                return 'Search Foursquare...'
+                return 'Search Foursquare (e.g Tacos near Baton Rouge)'
             }
         });
 
@@ -555,13 +552,9 @@ $(document).ready(function() {
 
         self.searchQuery = function (exploreObject) {
 
-            self.isAnimationDone = false;
-
             // Clear the map before making a new query
             self.activeMarker = null;
             self.removeMarkers();
-
-            var resultsArray = [];
 
             // Get venue items from query
             self.fsService.explore(exploreObject, function(data) {
@@ -587,8 +580,12 @@ $(document).ready(function() {
                                 // Create a marker from venue object
                                 var marker = new Marker(data.response.venue);
 
+                                marker.setMyMap(self);
+                                self.markers.push(marker);
+                                //marker.updateZIndex();
+
                                 // Add markers to map using synced queue
-                                resultsArray.push(marker);
+                                //resultsArray.push(marker);
 
                                 // Check if google map has a panorama view for this location
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
@@ -602,7 +599,7 @@ $(document).ready(function() {
 
                             if (++count == requestCount) {
                                 self.googleMap.fitBounds(bounds);
-                                self.attachMarkers(resultsArray);
+                                //self.attachMarkers(resultsArray);
                             }
                         });
 
@@ -618,31 +615,8 @@ $(document).ready(function() {
             self.googleMap.panTo(position);
         };
 
-        // Attaches each marker with i * 100 delay, i = marker's array index
-        self.attachMarkers = function (markers) {
-
-            var lastIndex = markers.length - 1;
-            for(var i = 0; i < markers.length; i++) {
-                var marker = markers[i];
-                // set timeout animation
-                setTimeout((function(marker, count) {
-                    return function () {
-                        marker.setMyMap(self);
-                        self.markers.push(marker);
-                        marker.updateZIndex();
-
-                        if (count == lastIndex) {
-                            self.isAnimationDone = true;
-                        }
-
-                    };
-                })(marker, i),i * 100);
-            }
-        };
-
         self.setActiveMarker = function (marker) {
 
-            if (!self.isAnimationDone) return;
 
             // close previous marker
             if (self.activeMarker != null && self.activeMarker != marker) {
@@ -677,16 +651,17 @@ $(document).ready(function() {
             self.googleMap.setCenter(center);
         });
 
-        self.isDesktopMode = (window.outerWidth >= 768);
+        self.isDesktopMode = window.matchMedia("screen and (min-width: 768px)").matches;
 
         // Change infoWindow to display as a modal or google's infoWindow depending on the browser's width
         window.addEventListener('resize', function () {
 
             // get browser mode
-            var displayMode = ( window.outerWidth >= 768);
+            var mql = window.matchMedia("screen and (min-width: 768px)");
+            var displayMode = mql.matches;
 
             // Only update infowindow when needed
-            if (self.isDesktopMode !== displayMode) {
+            if (displayMode !== self.isDesktopMode) {
                 self.isDesktopMode = displayMode;
 
                 var marker = self.activeMarker;
