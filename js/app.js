@@ -172,7 +172,6 @@ $(document).ready(function() {
      * Close info window if its open
      */
     Marker.prototype.closeInfoWindow = function() {
-        this.isInfoWindowOpen(false);
 
         var $modal = $('#myModal');
         if ($modal.hasClass('in')) {
@@ -180,23 +179,26 @@ $(document).ready(function() {
         } else {
             this.attached.infoWindow.close();
         }
-        //// If this marker is the map's active marker
-        //// update the map
+
+        // If this marker is the map's active marker
+        // update the map
         //var map = this.attached.map;
         //if (map !== null && map.activeMarker === this) {
         //    map.activeMarker = null;
         //}
+        this.isInfoWindowOpen(false);
+        this.isFocus(false);
     };
 
     Marker.prototype.openInfoWindow = function() {
-        this.isInfoWindowOpen(true);
+
 
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
 
 
         // Display desktop infowindow
-        if (this.attached.map.currentMode === 'desktop') {
+        if (this.attached.map.isDesktopMode) {
             this.attached.infoWindow.setContent(fragment);
             var marker = this.googleMarker;
             this.attached.infoWindow.open(marker.getMap(), marker);
@@ -207,7 +209,10 @@ $(document).ready(function() {
 
             // Attach a listener to update isInfoWindowOpen() when modal closes
             $('#myModal').on('hide.bs.modal', function() {
+
                 this.isInfoWindowOpen(false);
+                this.isFocus(false);
+
                 // Unbind listener when modal closes
                 $('#myModal').unbind();
             }.bind(this));
@@ -217,9 +222,16 @@ $(document).ready(function() {
         if (map !== null && map.activeMarker !== this) {
             map.activeMarker = this;
         }
+
+        this.isInfoWindowOpen(true);
+        this.isFocus(true);
     };
 
     Marker.prototype.updateColor = function () {
+
+        // wait until map animation is done before updating the marker's color
+        if (!this.attached.map.isAnimationDone) return;
+
         var color = '';
         if (this.isInfoWindowOpen()) {
             color = this.ACTIVE;
@@ -239,7 +251,7 @@ $(document).ready(function() {
             // auto scroll to list item
             $('#list-items').scrollTo('#'+this.id, 200);
 
-        } else if (autoFocus === true) { // If hover is from list-item
+        } else if (autoFocus === true) { // If hover is from listPanel and auto focus is checked
             var map = this.attached.map;
             if (map != null) {
                 map.centerOnMarker(this.googleMarker.getPosition());
@@ -254,9 +266,6 @@ $(document).ready(function() {
         $('#list-items').stop(true, false);
 
         this.isMouseOver(false);
-        if (!this.isInfoWindowOpen() && this.isFocus()) {
-            this.isFocus(false);
-        }
     };
 
     /**
@@ -277,6 +286,8 @@ $(document).ready(function() {
 
     Marker.prototype.setMyMap = function (myMap) {
         var googleMap = (myMap) ? myMap.googleMap : null;
+        //console.log(myMap);
+        //console.log(myMap.currentMode);
         this.attached.map = myMap;
         this.googleMarker.setMap(googleMap);
     };
@@ -325,7 +336,7 @@ $(document).ready(function() {
 
 
         // set height depending
-        var minH = (this.attached.map.currentMode === 'desktop') ? '360px' : '100%';
+        var minH = (this.attached.map.isDesktopMode === 'desktop') ? '360px' : '100%';
         var height = (this.panoData != null) ? minH : '200px';
         fragment.style.height = height;
 
@@ -450,7 +461,7 @@ $(document).ready(function() {
                     }
                 }
 
-                if (activeMarker != null) {
+                if (activeMarker != null && !activeMarker.isInfoWindowOpen()) {
                     activeMarker.openInfoWindow();
                 }
                 return self.markers();
@@ -544,8 +555,13 @@ $(document).ready(function() {
 
         self.searchQuery = function (exploreObject) {
 
+            self.isAnimationDone = false;
+
             // Clear the map before making a new query
+            self.activeMarker = null;
             self.removeMarkers();
+
+            var resultsArray = [];
 
             // Get venue items from query
             self.fsService.explore(exploreObject, function(data) {
@@ -571,6 +587,9 @@ $(document).ready(function() {
                                 // Create a marker from venue object
                                 var marker = new Marker(data.response.venue);
 
+                                // Add markers to map using synced queue
+                                resultsArray.push(marker);
+
                                 // Check if google map has a panorama view for this location
                                 self.streetViewService.getPanoramaByLocation(marker.googleMarker.getPosition(), 50, function (data, status) {
                                     if (status == google.maps.StreetViewStatus.OK) {
@@ -579,12 +598,11 @@ $(document).ready(function() {
                                     }
                                 }.bind(marker));
                                 bounds.extend(marker.googleMarker.getPosition());
-                                self.markers.push(marker);
                             }
 
                             if (++count == requestCount) {
                                 self.googleMap.fitBounds(bounds);
-                                self.attachMarkers();
+                                self.attachMarkers(resultsArray);
                             }
                         });
 
@@ -595,27 +613,36 @@ $(document).ready(function() {
             });
         };
 
-        // Attaches each marker with i * 100 delay, i = marker's array index
-        self.attachMarkers = function () {
-
-            for(var i = 0; i < self.markers().length; i++) {
-                var marker = self.markers()[i];
-                // set timeout animation
-                setTimeout((function(marker) {
-                    return function () {
-                        marker.setMyMap(self);
-                        marker.updateZIndex();
-                    };
-                })(marker),i * 100);
-            }
-        };
-
         // Centers map on marker
         self.centerOnMarker = function (position) {
             self.googleMap.panTo(position);
         };
 
+        // Attaches each marker with i * 100 delay, i = marker's array index
+        self.attachMarkers = function (markers) {
+
+            var lastIndex = markers.length - 1;
+            for(var i = 0; i < markers.length; i++) {
+                var marker = markers[i];
+                // set timeout animation
+                setTimeout((function(marker, count) {
+                    return function () {
+                        marker.setMyMap(self);
+                        self.markers.push(marker);
+                        marker.updateZIndex();
+
+                        if (count == lastIndex) {
+                            self.isAnimationDone = true;
+                        }
+
+                    };
+                })(marker, i),i * 100);
+            }
+        };
+
         self.setActiveMarker = function (marker) {
+
+            if (!self.isAnimationDone) return;
 
             // close previous marker
             if (self.activeMarker != null && self.activeMarker != marker) {
@@ -636,16 +663,12 @@ $(document).ready(function() {
         };
 
         self.removeMarkers = function () {
-
             var markers = self.markers.removeAll();
-
-            for (var i = 0; i < markers.length; i++) {
-                var marker = markers.pop();
+            var marker;
+            while (marker = markers.pop())
                 marker.setMyMap(null);
-                marker.googleMarker = null;
-            }
-
         };
+
         // Keeps map centered when being resized
         google.maps.event.addDomListener(window, 'resize', function() {
             var center = self.googleMap.getCenter();
@@ -654,32 +677,23 @@ $(document).ready(function() {
             self.googleMap.setCenter(center);
         });
 
-        self.currentMode = (window.outerWidth <= 480) ? 'mobile' : 'desktop';
-
-        // http://stackoverflow.com/questions/2854407/javascript-jquery-window-resize-how-to-fire-after-the-resize-is-completed
-        var waitForFinalEvent = (function () {
-            var timers = {};
-            return function (callback, ms, uniqueId) {
-                if (!uniqueId) {
-                    uniqueId = "Don't call this twice without a uniqueId";
-                }
-                if (timers[uniqueId]) {
-                    clearTimeout (timers[uniqueId]);
-                }
-                timers[uniqueId] = setTimeout(callback, ms);
-            };
-        })();
+        self.isDesktopMode = (window.outerWidth > 480);
 
         // Change infoWindow to display as a modal or google's infoWindow depending on the browser's width
-        window.addEventListener("resize", function (e) {
-            var marker = self.activeMarker;
-            var displayMode = ( window.outerWidth <= 480) ? 'mobile' : 'desktop';
+        window.addEventListener('resize', function () {
+
+            // get browser mode
+            var displayMode = ( window.outerWidth > 480);
 
             // Only update infowindow when needed
-            if (self.currentMode !== displayMode) {
-                self.currentMode = displayMode;
-                marker.closeInfoWindow();
-                marker.openInfoWindow();
+            if (self.isDesktopMode !== displayMode) {
+                self.isDesktopMode = displayMode;
+
+                var marker = self.activeMarker;
+                if (marker !== null) {
+                    marker.closeInfoWindow();
+                    marker.openInfoWindow();
+                }
             }
 
         }, false);
@@ -687,10 +701,6 @@ $(document).ready(function() {
 
 
     };
-
-
-
-
 
     var mapViewModal = new MapViewModal(mapConfig);
     mapViewModal.searchQuery(mapConfig.explore);
