@@ -110,7 +110,6 @@ $(document).ready(function() {
         self.fsWebsite = vResponse.canonicalUrl;
 
         self.panoData = null;
-        self.displayState = '';
 
         // objects that get attached to this marker
         self.attached = {
@@ -150,10 +149,8 @@ $(document).ready(function() {
         google.maps.event.addListener(self.attached.infoWindow, 'domready', self.onDOMInfoWindowReady.bind(this));
         google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {
             var map = self.attached.map;
-            console.log('closeclick');
             if (map !== null && map.activeMarker === self) {
                 map.activeMarker = null;
-                console.log('null');
             }
             self.closeInfoWindow();
         });
@@ -176,8 +173,13 @@ $(document).ready(function() {
      */
     Marker.prototype.closeInfoWindow = function() {
         this.isInfoWindowOpen(false);
-        this.attached.infoWindow.close();
-        this.displayState = '';
+
+        var $modal = $('#myModal');
+        if ($modal.hasClass('in')) {
+            $modal.modal('hide');
+        } else {
+            this.attached.infoWindow.close();
+        }
         //// If this marker is the map's active marker
         //// update the map
         //var map = this.attached.map;
@@ -188,21 +190,25 @@ $(document).ready(function() {
 
     Marker.prototype.openInfoWindow = function() {
         this.isInfoWindowOpen(true);
-        var marker = this.googleMarker;
+
         var fragment = this.getInfoWindowcontent();
         this.attachPano(fragment);
 
-        if ($(document).width() > 480) {
-            this.displayState = 'infoWindow';
+
+        // Display desktop infowindow
+        if (this.attached.map.currentMode === 'desktop') {
             this.attached.infoWindow.setContent(fragment);
+            var marker = this.googleMarker;
             this.attached.infoWindow.open(marker.getMap(), marker);
         } else {
-            this.displayState = 'modal';
+            // Display modal for devices with width <= 480
             this.loadModal(fragment);
             this.isMouseOver(false); // fixes the marker's color on mobile devices
-            // Unbind listener when myModal closes
-            $('#myModal').on('hide.bs.modal', function(e) {
+
+            // Attach a listener to update isInfoWindowOpen() when modal closes
+            $('#myModal').on('hide.bs.modal', function() {
                 this.isInfoWindowOpen(false);
+                // Unbind listener when modal closes
                 $('#myModal').unbind();
             }.bind(this));
         }
@@ -319,7 +325,7 @@ $(document).ready(function() {
 
 
         // set height depending
-        var minH = ($(document).width() > 480) ? '360px' : '100%';
+        var minH = (this.attached.map.currentMode === 'desktop') ? '360px' : '100%';
         var height = (this.panoData != null) ? minH : '200px';
         fragment.style.height = height;
 
@@ -366,7 +372,6 @@ $(document).ready(function() {
 
         //this.panorama.setPosition(this.googleMarker.getPosition());
         //this.panorama.setPano(this.panoData);
-        console.log(this.panorama);
         if (this.panorama != null) {
             this.panorama.setVisible(true);
         }
@@ -649,30 +654,41 @@ $(document).ready(function() {
             self.googleMap.setCenter(center);
         });
 
-        // Change infoWindow to display a modal if window width <= 480
-        window.addEventListener("resize", function () {
+        self.currentMode = (window.outerWidth <= 480) ? 'mobile' : 'desktop';
 
-            var marker = self.activeMarker;
-
-            if (marker !== null && marker.isInfoWindowOpen()) {
-
-                if (window.outerWidth <= 480) {
-                    if (marker.displayState !== 'modal') {
-                        marker.closeInfoWindow();
-                        marker.openInfoWindow();
-                    }
-                } else {
-                    if (marker.displayState !== 'infoWindow') {
-                        $('#myModal').modal('hide');
-                        marker.closeInfoWindow();
-                        marker.openInfoWindow();
-                    }
+        // http://stackoverflow.com/questions/2854407/javascript-jquery-window-resize-how-to-fire-after-the-resize-is-completed
+        var waitForFinalEvent = (function () {
+            var timers = {};
+            return function (callback, ms, uniqueId) {
+                if (!uniqueId) {
+                    uniqueId = "Don't call this twice without a uniqueId";
                 }
+                if (timers[uniqueId]) {
+                    clearTimeout (timers[uniqueId]);
+                }
+                timers[uniqueId] = setTimeout(callback, ms);
+            };
+        })();
 
+        // Change infoWindow to display as a modal or google's infoWindow depending on the browser's width
+        window.addEventListener("resize", function (e) {
+            var marker = self.activeMarker;
+            var displayMode = ( window.outerWidth <= 480) ? 'mobile' : 'desktop';
+
+            // Only update infowindow when needed
+            if (self.currentMode !== displayMode) {
+                self.currentMode = displayMode;
+                marker.closeInfoWindow();
+                marker.openInfoWindow();
             }
+
         }, false);
 
+
+
     };
+
+
 
 
 
@@ -680,31 +696,4 @@ $(document).ready(function() {
     mapViewModal.searchQuery(mapConfig.explore);
     ko.applyBindings(mapViewModal);
 
-    // Detect if user is using a mobile phone
-    // http://stackoverflow.com/questions/3514784/what-is-the-best-way-to-detect-a-mobile-device-in-jquery
-    //if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-    if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-
-        // Locks scroll if device is in landscape
-        var scrollLockLandscape = function () {
-            if (window.outerWidth > window.outerHeight) {
-                window.scrollTo(1, 1);
-                $('#landscape').show();
-                // lock scroll
-                $(document).bind("touchmove", function (event) {
-                    event.preventDefault();
-                });
-            } else {
-                $('#landscape').hide();
-                // unlock scroll
-                $(document).unbind("touchmove");
-            }
-        };
-
-        //scrollLockLandscape();
-        // http://tech.sarathdr.com/featured/prevent-landscape-orientation-of-iphone-web-apps/
-        window.addEventListener('resize', function () {
-            //scrollLockLandscape();
-        }, false);
-    }
 });
