@@ -336,7 +336,7 @@ $(document).ready(function() {
 
 
         // set height depending
-        var minH = (this.attached.map.isDesktopMode === 'desktop') ? '360px' : '100%';
+        var minH = (this.attached.map.isDesktopMode) ? '360px' : '100%';
         var height = (this.panoData != null) ? minH : '200px';
         fragment.style.height = height;
 
