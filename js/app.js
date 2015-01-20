@@ -677,13 +677,13 @@ $(document).ready(function() {
             self.googleMap.setCenter(center);
         });
 
-        self.isDesktopMode = (window.outerWidth > 480);
+        self.isDesktopMode = (window.outerWidth >= 768);
 
         // Change infoWindow to display as a modal or google's infoWindow depending on the browser's width
         window.addEventListener('resize', function () {
 
             // get browser mode
-            var displayMode = ( window.outerWidth > 480);
+            var displayMode = ( window.outerWidth >= 768);
 
             // Only update infowindow when needed
             if (self.isDesktopMode !== displayMode) {
