@@ -20,7 +20,7 @@ body,
 }
 
 .panorama {
-    height: 63%;
+    height: 68%;
     width: 100%;
     display: block;
 }
@@ -41,7 +41,7 @@ body,
 .foursquare {
     position: relative;
     line-height: 1.4em;
-    height: 100%;
+    height: 94%;
 }
 
 .contactInfo {

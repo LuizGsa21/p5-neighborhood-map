@@ -18,10 +18,20 @@ $(document).ready(function() {
     };
 
 
+    /**
+     * My attempt in making a Foursquare service class lolol
+     *
+     * @param appId - foursquare app id
+     * @param secretKey - foursquare secret key (is this even suppose to be visible on client side apps??!?)
+     * @param version - foursquare version
+     * @param mode - foursquare mode
+     * @constructor
+     */
     var FourSquareService = function (appId, secretKey, version, mode) {
 
         var self = this;
 
+        // Foursquare required credentials
         self.appId = ['?client_id=', appId].join('');
 
         self.secretKey = ['&client_secret=', secretKey].join('');
@@ -30,26 +40,40 @@ $(document).ready(function() {
 
         self.mode = ['&m=' , mode].join('');
 
+        // supported foursquare query options
         self.queryOptions = {
             explore: 'venues/explore',
             venueDetail: 'venues/',
             search: 'venues/search'
         };
 
+        /**
+         * Prepends foursquare base URL and  to queryOption and appends required credentials
+         *
+         * @param {string} queryOption A string value from queryOptions object
+         * @returns {string} fsBaseURL + queryOption + requiredCredentials
+         */
         self.getBaseURL = function (queryOption) {
             return ['https://api.foursquare.com/v2/', queryOption, self.appId , self.secretKey , self.version , self.mode].join('');
         };
 
-        self.explore = function (searchObject, callback) {
+        /**
+         * Makes a foursquare explore query using the specified exploreObject
+         * Explore queries return a list of recommended venues near the current location.
+         * The current location must be specified in the exploreObject.
+         * @param exploreObject more dettails at https://developer.foursquare.com/docs/venues/explore
+         * @param callback callback method to handle response
+         */
+        self.explore = function (exploreObject, callback) {
             var query = [self.getBaseURL(self.queryOptions.explore)];
 
-            // get keys from search object
-            var keys = Object.keys(searchObject);
+            // get keys from explore object
+            var keys = Object.keys(exploreObject);
 
-            // create url from searchObject
+            // create url
             for (var i = 0; i < keys.length; i++) {
                 var key = keys[i];
-                query.push(['&', key, '=', searchObject[key]].join(''));
+                query.push(['&', key, '=', exploreObject[key]].join(''));
             }
 
             // replace all whitespace with +
@@ -65,13 +89,22 @@ $(document).ready(function() {
             });
         };
 
+        /**
+         * Makes a venue detail query from the specified venueId
+         * Venue queries gives details about a venue, including location, mayorship, tags, tips, specials, and category.
+         * https://developer.foursquare.com/docs/venues/venues
+         * @param venueId foursquare string identifier for this venue.
+         * @param callback callback method to handle response
+         */
         self.venueDetails = function(venueId, callback) {
 
+            // create URL
             var url = self.getBaseURL([self.queryOptions.venueDetail, venueId, '/'].join(''));
 
             var response = function(data) {
                 callback(data);
             };
+
             $.ajax(url, {
                 dataType: 'jsonp',
                 success: response,
@@ -80,8 +113,16 @@ $(document).ready(function() {
 
         };
 
+        /**
+         * Parses a simple string into a foursquare exploreObject
+         * e.g 'some query NEAR location'
+         *
+         * @param queryText
+         * @returns {{query: string, near: string}}
+         */
         self.queryTextToObject  = function(queryText) {
-            var end = queryText.indexOf('near');
+            queryText = queryText.toLowerCase();
+            var end = queryText.lastIndexOf('near');
             var query = queryText.substring(0, end).trim();
             var location = queryText.substring(end + 4).trim();
 
@@ -93,15 +134,21 @@ $(document).ready(function() {
 
     };
 
-
+    /**
+     * Creates a marker, with the given venue response.
+     * @param vResponse venue response object (https://developer.foursquare.com/docs/responses/venue)
+     * @constructor
+     */
     var Marker = function (vResponse) {
 
         var self = this;
 
+        // ID number used to create a unique marker and pano id
         self.id = Marker.idNumber++;
         self.markerId = 'marker-' + self.id;
         self.panoId = 'pano-' + self.id;
 
+        // Marker's data info (used when displaying its infoWindow)
         self.name = vResponse.name;
         self.contact = vResponse.contact;
         self.location = vResponse.location;
@@ -149,10 +196,12 @@ $(document).ready(function() {
         google.maps.event.addListener(self.attached.infoWindow, 'domready', self.onDOMInfoWindowReady.bind(this));
         google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {
             var map = self.attached.map;
-            if (map !== null && map.activeMarker === self) {
+            // Make sure this marker is no longer active when closed
+            if (map != null && map.activeMarker === self) {
                 map.activeMarker = null;
             }
-            self.closeInfoWindow();
+            this.isInfoWindowOpen(false);
+            this.isFocus(false);
         });
 
     };
@@ -169,7 +218,8 @@ $(document).ready(function() {
     Marker.prototype.ACTIVE = 'https://mt.google.com/vt/icon?psize=24&font=fonts/Roboto-Regular.ttf&color=ff330000&name=icons/spotlight/spotlight-waypoint-a.png&ax=44&ay=48&scale=1&text=•';
 
     /**
-     * Close info window if its open
+     * Closes this marker's infoWindow and updates
+     * its observables. (isInfoWindowOpen(), isFocus())
      */
     Marker.prototype.closeInfoWindow = function() {
         this.isInfoWindowOpen(false);
@@ -177,16 +227,22 @@ $(document).ready(function() {
 
         var $modal = $('#myModal');
         if ($modal.hasClass('in')) {
-            console.log('modal');
             $modal.modal('hide');
         } else {
-            console.log('close');
             this.attached.infoWindow.close();
         }
 
 
     };
 
+    /**
+     * Opens this marker's infoWindow and updates
+     * its observables (isInfoWindowOpen(), isFocus()).
+     *
+     * When the map is in desktop mode, it
+     * will open the google's standard info window. Otherwise,
+     * it will display its contents using bootstrap's modal
+     */
     Marker.prototype.openInfoWindow = function() {
         this.isInfoWindowOpen(true);
         this.isFocus(true);
@@ -201,7 +257,7 @@ $(document).ready(function() {
             var marker = this.googleMarker;
             this.attached.infoWindow.open(marker.getMap(), marker);
         } else {
-            // Display modal for devices with width <= 480
+            // Display modal for devices with width < 768px
             this.loadModal(fragment);
             this.isMouseOver(false); // fixes the marker's color on mobile devices
 
@@ -218,6 +274,9 @@ $(document).ready(function() {
 
     };
 
+    /**
+     * Updates the marker's color according to its current state
+     */
     Marker.prototype.updateColor = function () {
 
         var color = '';
@@ -231,23 +290,35 @@ $(document).ready(function() {
         this.googleMarker.setIcon(color);
     };
 
-    Marker.prototype.mouseover = function (autoFocus) {
+    /**
+     * Sets isMouseOver to true.
+     * When mouseover is triggered by google map, it make sure the marker is visible inside list panel by auto scrolling.
+     * If event is triggered by the list panel and auto focus is checked, it will center map on marker.
+     * @param {(google.maps.MouseEvent|boolean)} event
+     */
+    Marker.prototype.mouseover = function (event) {
+        console.log(event);
         this.isMouseOver(true);
 
-        // If hover is from map
-        if (autoFocus.latLng) {
+        // If event is coming from google map
+        if (event.latLng) {
             // auto scroll to list item
             $('#list-items').scrollTo('#'+this.id, 200);
 
-        } else if (autoFocus === true) { // If hover is from listPanel and auto focus is checked
+        } else if (event === true) { // If event is from listPanel and auto focus is checked
             var map = this.attached.map;
             if (map != null) {
+                // center map on marker
                 map.centerOnMarker(this.googleMarker.getPosition());
                 this.updateZIndex();
             }
         }
     };
 
+    /**
+     * Sets marker's isMouseOver to false, and
+     * cancels any autoscroll events
+     */
     Marker.prototype.mouseout = function () {
 
         // Cancel any autoscroll events
@@ -257,7 +328,10 @@ $(document).ready(function() {
     };
 
     /**
-     * Tells the attached map that this is the current active marker
+     * Tells the attached map that this is the current active marker.
+     *
+     * This method gets called when the marker is clicked from the google map or
+     * the list panel.
      */
     Marker.prototype.click = function () {
         var myMap = this.attached.map;
@@ -266,22 +340,29 @@ $(document).ready(function() {
         }
     };
 
+    /**
+     * Sets this marker and its info window to
+     * have the highest z-index
+     */
     Marker.prototype.updateZIndex = function () {
         var zIndex = Marker.zIndex++;
         this.googleMarker.setZIndex(zIndex);
         this.attached.infoWindow.setZIndex(zIndex);
     };
 
-    Marker.prototype.setMyMap = function (myMap) {
-        var googleMap = (myMap) ? myMap.googleMap : null;
-        //console.log(myMap);
-        //console.log(myMap.currentMode);
-        this.attached.map = myMap;
+    /**
+     * Attaches the mapViewModal and its googleMap to this marker.
+     * Passing the value null will remove marker from map.
+     * @param {MapViewModal} mapViewModal
+     */
+    Marker.prototype.setMyMap = function (mapViewModal) {
+        var googleMap = (mapViewModal) ? mapViewModal.googleMap : null;
+        this.attached.map = mapViewModal;
         this.googleMarker.setMap(googleMap);
     };
 
     /**
-     * Creates the marker's infoWindow content using the
+     * Creates the marker's info window content using the
      * html template (#foursquareTemplate)
      *
      * @returns {HTMLElement} - infowindow content
@@ -322,10 +403,15 @@ $(document).ready(function() {
         div.innerHTML = content;
         var fragment = div.childNodes[1];
 
-
-        // set height depending
-        var minH = (this.attached.map.isDesktopMode) ? '360px' : '100%';
-        var height = (this.panoData != null) ? minH : '200px';
+        var height;
+        // Adjust info window height
+        if (this.attached.map.isDesktopMode) {
+            // Make info window 200px when if it doesn't a panorama
+            height = (this.panoData != null) ? '360px' : '200px';
+        } else {
+            // expand modal 100% when display in mobile mode
+            height = '100%';
+        }
         fragment.style.height = height;
 
         return fragment;
@@ -333,8 +419,13 @@ $(document).ready(function() {
 
     };
 
+    /**
+     * This method will add a panorama to this marker and append it to the fragment if its panoData != null.
+     * If panoData == null, it appends a no street view message to the fragment.
+     *
+     * @param {HTMLElement} fragment - The fragment returned from getInfoWindowcontent()
+     */
     Marker.prototype.attachPano = function(fragment) {
-        //var panoDiv = document.getElementById(this.panoId);
         var panoDiv = $(fragment).find('#' + this.panoId)[0];
 
         // Append panorama view to fragment
@@ -351,33 +442,26 @@ $(document).ready(function() {
             };
             //add pano to infowindow
             this.panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
-            //this.panorama.setPosition(this.googleMarker.getPosition());
-            //this.panorama.setVisible(true);
-            //this.panorama.setPano(this.panoData);
         } else {
-            //$(panoDiv).css("height", "50px",'position','relative');
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
         }
     };
 
-    Marker.prototype.loadModal = function(contents) {
+    /**
+     * When invoked, it will append the given fragment to #myModal and
+     * make its panaorama visible
+     * @param {HTMLElement} fragment - The fragment returned from getInfoWindowcontent()
+     */
+    Marker.prototype.loadModal = function(fragment) {
 
-        $($('.modal-title').get(0)).html($(contents).find('#title'));
-        $($('.modal-body').get(0)).html(contents);
-        //$($('.modal-body').get(0)).prepend(contents);
-
+        $($('.modal-title').get(0)).html($(fragment).find('#title'));
+        $($('.modal-body').get(0)).html(fragment);
 
         $('#myModal').modal('show');
 
-        //this.panorama.setPosition(this.googleMarker.getPosition());
-        //this.panorama.setPano(this.panoData);
         if (this.panorama != null) {
             this.panorama.setVisible(true);
         }
-
-
-
-
     };
 
     /**
@@ -401,7 +485,17 @@ $(document).ready(function() {
 
     };
 
-    var ListPanel = function (map) {
+    /**
+     * Creates a list panel
+     * What does the list panel do?
+     *  - Displays a list of all the markers attached to myMap
+     *  - Provides custom search using foursquare api e.g (pizza near new york city)
+     *  - Provides search filter (hides unmatched markers on map and list panel)
+     *  - When auto focus is checked, centers map on the hovered list item
+     * @param myMap {MapViewModal} myMap
+     * @constructor
+     */
+    var ListPanel = function (myMap) {
 
         var self = this;
 
@@ -419,10 +513,10 @@ $(document).ready(function() {
             return self.isVisible() ? 'Hide List' : 'Show List';
         });
 
-        // The attaches map
-        self.map = map;
+        // The attached map
+        self.myMap = myMap;
         // Markers currently on map
-        self.markers = map.markers;
+        self.markers = myMap.markers;
 
         // Search bar used to make foursquare queries and filter map markers
         self.searchBar = ko.observable('');
@@ -439,7 +533,7 @@ $(document).ready(function() {
         // visible on the map and reopen active marker if needed
         self.radioOption.subscribe(function (option) {
             if (option === 'search') {
-                var activeMarker = self.map.activeMarker;
+                var activeMarker = self.myMap.activeMarker;
                 // Make every marker visible on map
                 for (var i = 0; i < self.markers().length; i++) {
                     var gMarker = self.markers()[i].googleMarker;
@@ -455,7 +549,7 @@ $(document).ready(function() {
             }
         });
 
-        // ListPanel searchbar placeholder to display, value changes when radioOption is changed
+        // Returns the #listSearch (search box) placeholder value.
         self.listInfo = ko.computed(function () {
             if (self.radioOption() === 'filter') {
                 return 'Filter List...';
@@ -465,16 +559,15 @@ $(document).ready(function() {
         });
 
         /**
-         * Markers to display on list panel and map.
-         *
-         * If radio option is equal to 'search', it will simply return self.markers(),
-         * else it will filter through the array and hide the appropriate markers,
-         * while still keeping infoWindow in sync.
+         * Returns the markers the filtered markers
+         * When radio option is equal to 'search', this method will simply return self.markers(). (all markers)
+         * Any other value it will iterate through the array and
+         * hide/show the appropriate markers, while keeping infoWindow in sync.
          * @type {KnockoutComputed<T>}
          */
-        self.filterMarkers = ko.computed(function () {
+        self.filteredMarkers = ko.computed(function () {
 
-            var activeMarker = self.map.activeMarker;
+            var activeMarker = self.myMap.activeMarker;
 
             if (self.radioOption() === 'search')
                 return self.markers();
@@ -518,18 +611,18 @@ $(document).ready(function() {
                 return true;
             } else if (self.radioOption() == 'search') { // make sure search radio button is selected
                 // Get foursquare service
-                var fs = self.map.fsService;
+                var fs = self.myMap.fsService;
                 // Create a query object from the input text
                 var queryObj = fs.queryTextToObject(self.searchBar());
-                // make query
-                self.map.searchQuery(queryObj);
+                // give myMap the query object
+                self.myMap.searchQuery(queryObj);
             }
             return true;
         };
     };
 
     /**
-     * Creates a map from the given mapConfig.
+     * Creates a map view modal
      * @param mapConfig - map initialier object
      * @constructor
      */
@@ -560,9 +653,10 @@ $(document).ready(function() {
         self.activeMarker = null;
 
         /**
-         * Makes a foursquare query with the given object, then
-         * creates and attaches markers to the map with the received data
-         * @param exploreObject - the given object
+         * Makes a foursquare query using the exploreObject.
+         * When the data request is received, it creates and attaches markers to the map.
+         *
+         * @param exploreObject more details at https://developer.foursquare.com/docs/venues/explore
          */
         self.searchQuery = function (exploreObject) {
 
@@ -570,11 +664,11 @@ $(document).ready(function() {
             self.activeMarker = null;
             self.removeMarkers();
 
-            // Get venue items from query
+            // Make a query using the explore object
             self.fsService.explore(exploreObject, function(data) {
                 if (data.meta.code === 200) {
 
-                    // extract items
+                    // extract venue items from result
                     var items = data.response.groups[0].items;
 
                     var requestCount = items.length;
@@ -589,14 +683,12 @@ $(document).ready(function() {
                         // Get a more detailed venue for each item
                         self.fsService.venueDetails(venueId, function(data) {
 
-
                             if (data.meta.code === 200) {
                                 // Create a marker from venue object
                                 var marker = new Marker(data.response.venue);
 
-                                // attach marker on map
-                                marker.setMyMap(self);
-                                // add marker to observable array to sync map markers with listPanel
+                                marker.setMyMap(self);// attach marker on map
+                                // add marker to observable array (adds marker to list panel)
                                 self.markers.push(marker);
                                 marker.updateZIndex();
 
@@ -613,7 +705,7 @@ $(document).ready(function() {
                             if (++count == requestCount) {
                                 // Update map bounds after retreiving all the markers
                                 self.googleMap.fitBounds(bounds);
-                                console.log(bounds.getCenter());
+                                self.currentBounds = bounds; // save current bounds (reused when if window resizes)
                             }
                         });
 
@@ -624,7 +716,10 @@ $(document).ready(function() {
             });
         };
 
-        // Centers map on marker
+        /**
+         * Changes the center of the map to the given LatLng
+         * @param {google.maps.LatLng} position
+         */
         self.centerOnMarker = function (position) {
             self.googleMap.panTo(position);
         };
@@ -657,7 +752,7 @@ $(document).ready(function() {
         };
 
         /**
-         * Removes the attached markers from this map
+         * Removes the attached markers
          */
         self.removeMarkers = function () {
             var markers = self.markers.removeAll();
@@ -670,7 +765,9 @@ $(document).ready(function() {
         google.maps.event.addDomListener(window, 'resize', function() {
             var center = self.googleMap.getCenter();
             google.maps.event.trigger(self.googleMap, 'resize');
-            //self.map.fitBounds(self.currentBounds);
+            if (self.currentBounds) {
+                self.googleMap.fitBounds(self.currentBounds);
+            }
             self.googleMap.setCenter(center);
         });
 
