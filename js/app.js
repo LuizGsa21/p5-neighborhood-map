@@ -765,7 +765,7 @@ $(document).ready(function() {
         google.maps.event.addDomListener(window, 'resize', function() {
             var center = self.googleMap.getCenter();
             google.maps.event.trigger(self.googleMap, 'resize');
-            if (self.currentBounds) {
+            if (self.currentBounds && self.activeMarker === null) {
                 self.googleMap.fitBounds(self.currentBounds);
             }
             self.googleMap.setCenter(center);

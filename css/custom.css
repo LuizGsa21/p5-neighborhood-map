@@ -74,6 +74,7 @@ body,
     float: right;
     margin-top: 0;
 }
+/** ./Info Window CSS **/
 
 /** List Panel **/
 #listPanel {
@@ -88,7 +89,8 @@ body,
     background: none;
 }
 
-#listSearch {
+/* Search Bar */
+#searchBar {
     width: 100%;
     background-color: #fff;
     margin: 0;
@@ -100,10 +102,38 @@ body,
     padding-left: 15px;
 }
 
-#listSearch:focus {
+#searchBar:focus {
     outline: 0;
 }
 
+/* Search bar option menu */
+.controls {
+    margin-top: 16px;
+    border: 1px solid transparent;
+    border-radius: 2px 0 0 2px;
+    height: 32px;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#type-selector {
+    margin: 0;
+    padding: 5px 11px 0px 11px;
+    width: 100%;
+    color: #fff;
+    background-image: linear-gradient(rgb(94, 148, 255) 0%, rgb(85, 140, 251) 100%);
+    float: left;
+}
+
+
+#type-selector label {
+    font-family: Roboto;
+    font-size: 13px;
+    font-weight: 300;
+}
+/* ./search bar option menu */
+
+/* list items */
 #list-items {
     list-style-position: inside;
     background-color: white;
@@ -140,17 +170,21 @@ body,
 #list-items::-webkit-scrollbar {
     width: 12px;
 }
+
 #list-items::-webkit-scrollbar-track {
     background-color: #eaeaea;
     border-left: 1px solid #ccc;
 }
+
 #list-items::-webkit-scrollbar-thumb {
     background-color: #ccc;
 }
+
 #list-items::-webkit-scrollbar-thumb:hover {
     background-color: #aaa;
 }
 
+/* button panel */
 .btn-panel {
     background-image: linear-gradient(rgb(94, 148, 255) 0%, rgb(85, 140, 251) 100%);
     border-bottom-left-radius: 5px;
@@ -163,11 +197,7 @@ body,
     cursor: pointer;
     width: 100%;
     position: relative;
-    /*height: 10%;*/
-    /*min-height: 45px;*/
     height: 45px;
-    /*bottom: 0;*/
-
 }
 
 .glyphicon-minimize {
@@ -177,51 +207,26 @@ body,
     width: 30px;
     float: right;
 }
+.glyphicon-maximize {
+    display: block;
+    background: url(https://embed-dot-more-than-a-map.appspot.com/images/maximize.png) no-repeat top;
+    height: 20px;
+    width: 30px;
+    float: right;
+}
 
 button {
     border: 0;
     outline: none;
 }
-
-/** Top search bar **/
-.controls {
-    margin-top: 16px;
-    border: 1px solid transparent;
-    border-radius: 2px 0 0 2px;
-    height: 32px;
-    outline: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-#search-container {
-    position: fixed;
-    left: 50%;
-    width: 746px;
-    top: 20px;
-    transform: translate(-50%, 0);
-    z-index: 3;
-}
-
-#type-selector {
-    margin: 0;
-    padding: 5px 11px 0px 11px;
-    width: 100%;
-    color: #fff;
-    background-image: linear-gradient(rgb(94, 148, 255) 0%, rgb(85, 140, 251) 100%);
-    float: left;
-}
+/* ./ button panel */
 
 
-#type-selector label {
-    font-family: Roboto;
-    font-size: 13px;
-    font-weight: 300;
-}
 
 /** ./List Panel **/
 
-
-@media screen and (max-width: 767px )   {
+/** Mobile devices **/
+@media screen and (max-width: 767px)  {
     #listPanel {
         width: 100%;
         margin: 0;
@@ -245,6 +250,7 @@ button {
 
     .contactInfo {
         height: 40%;
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -294,7 +300,8 @@ button {
     }
 }
 
-@media screen and (max-height: 480px ) {
+/* Make list panel smaller and remove bottom modal close button for devices with height <= 480px */
+@media screen and (max-height: 480px) {
 
     #list-items {
         max-height: 200px;
