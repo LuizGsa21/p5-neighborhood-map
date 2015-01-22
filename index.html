@@ -53,6 +53,7 @@
 
 		<!-- List Panel -->
 		<div id="listPanel" data-bind="with: listPanel">
+			<!-- Search bar -->
 			<input id="searchBar" class="controls" placeholder="" type="text"
 			       data-bind="
 			        value: searchBar,
@@ -61,7 +62,8 @@
 			        attr: { placeholder: listInfo },
 			        event: {keyup: searchBarInput},
 			        css: {hidden: isVisible"
-			       autocomplete="off" />
+			       autocomplete="off" /><!-- ./Search bar -->
+			<!-- Search bar options -->
 			<div id="type-selector" class="controls" data-bind="visible: isVisible">
 
 				<input type="radio" name="type" value="search" data-bind="checked: radioOption" id="search-foursquare">
@@ -74,7 +76,8 @@
 					<input type="checkbox" name="type" value="search" data-bind="checked: autoFocus" id="auto-hide">
 					<label for="auto-hide">Auto Focus</label>
 				</div>
-			</div>
+			</div><!-- ./Search bar options -->
+			<!-- List items -->
 			<div  style="height: 76%; width: 100%; overflow: hidden" data-bind="visible: isVisible">
 				<ol type="1" id="list-items"
 				    data-bind="foreach: { data: filteredMarkers, as: 'marker' }">
@@ -88,7 +91,7 @@
                       text: name">
 					</li>
 				</ol>
-			</div>
+			</div> <!-- ./List items -->
 			<!-- button panel -->
 			<button class="btn-panel"
 			        data-bind="click: toggle.bind($data)">
@@ -98,9 +101,8 @@
                      'glyphicon-minimize': isVisible,
                      'glyphicon-maximize': !isVisible() }">
 				</a>
-			</button>
-			<!-- ./button panel -->
-		</div>
+			</button><!-- ./button panel -->
+		</div><!-- ./List panel -->
 
 		<div id="preload" style="display: none;">
 			<img src="https://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-poi.png&scale=1" width="1" height="1" alt="Image 01" />
