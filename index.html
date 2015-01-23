@@ -44,23 +44,34 @@
 				</div><!-- /.modal-content -->
 			</div><!-- /.modal-dialog -->
 		</div><!-- /.modal -->
-		<!-- Info window template (Used for building info window content) -->
-		<script id="foursquareTemplate" type="text/html">
-			<div id="{{id}}" class="placeInfo">
-				<h2 id="title" class="text-align-center">{{title}}</h2>
-				<div class="foursquare">
-					<div class="contactInfo">
-							<div style="width: 100%">
-								<p class="address"><strong>Location:</strong><br>{{address}}</p>
-								<p class="phone"><strong>Phone: </strong>{{phone}}</p>
-								<p class="rating">{{rating}}</p>
-								<p class="moreInfo-link">{{info}}</p>
-							</div>
+
+	<div data-bind="with: activeMarker" id="infoWindow" class="placeInfo">
+		<div data-bind="style: { height: containsPano ? '360px' : '200px' }">
+			<h2 id="title" class="text-align-center">
+				<a data-bind="text: name, attr: { href: website }" target="_blank"></a>
+			</h2>
+			<div class="foursquare">
+				<div class="contactInfo">
+					<div style="width: 100%">
+						<p class="address">
+							<strong>Location:<br></strong><span data-bind="text: formattedAddress"></span>
+						</p>
+						<p class="phone">
+							<strong>Phone: </strong><span data-bind="text: formattedPhone"></span>
+						</p>
+						<p class="rating">
+							<strong data-bind="text: rating ? 'Rating: ' : 'No Ratings"></strong>
+							<span data-bind="text: rating"></span>
+						</p>
+						<p class="moreInfo-link">
+							<a target="_blank" data-bind="attr: { href: fsWebsite }">More Info</a>
+						</p>
 					</div>
-					<div id="{{panoId}}" class="{{panoramaClass}}"></div>
 				</div>
+				<div id="myPano" data-bind="css: {panorama: containsPano()}"></div>
 			</div>
-		</script>
+		</div>
+	</div>
 
 		<!-- List Panel -->
 		<div id="listPanel" data-bind="with: listPanel">

@@ -243,6 +243,8 @@ button {
     }
 
     .placeInfo {
+        position: relative;
+        height: auto;
         min-width: 280px;
         white-space: nowrap;
     }

@@ -151,13 +151,24 @@ $(document).ready(function() {
 
         // Marker's data info (used when displaying its infoWindow)
         self.name = vResponse.name;
+
         self.contact = vResponse.contact;
-        self.location = vResponse.location;
+        self.formattedPhone = this.contact.formattedPhone;
+
         self.rating = vResponse.rating;
+
         self.website = vResponse.url;
         self.fsWebsite = vResponse.canonicalUrl;
 
+        self.location = vResponse.location;
+        self.formattedAddress = [
+            this.location.address, '&',
+            this.location.formattedAddress[1], '<br>',
+            this.location.formattedAddress[2]
+        ].join('');
+
         self.panoData = null;
+        self.containsPano = ko.observable(false);
 
         // observables to keep track of marker's state
         self.isFocus = ko.observable(false);
@@ -201,8 +212,8 @@ $(document).ready(function() {
     // All the markers share a infoWindow instance, so only one info window can be opened at a time.
     // I chose this route because having multiple info windows makes the look cluttered.
     Marker.prototype.googleInfoWindow = new google.maps.InfoWindow({});
-    Marker.prototype.$modalInfoWindow = $('#myModal'); // Use a modal to display info window with width < 768px
-
+    Marker.prototype.$modalInfoWindow = $('#myModal'); // Use modal infoWindow for devives with < 768px width
+    Marker.prototype.$infoWindow = $('#infoWindow'); // Use default infoWindow with >= 768px width
 
     /**
      * Closes this marker's info window and updates
@@ -216,6 +227,7 @@ $(document).ready(function() {
         if ($modal.hasClass('in')) {
             $modal.modal('hide');
         } else {
+            $('body').append(this.$infoWindow); // append back to body so it doesn't get destroyed
             this.googleInfoWindow.close();
         }
     };
@@ -232,8 +244,7 @@ $(document).ready(function() {
         this.isInfoWindowOpen(true);
         this.isFocus(true);
 
-        var fragment = this.getInfoWindowcontent();
-        this.attachPano(fragment);
+        //var fragment = this.getInfoWindowcontent();
 
 
         // Display desktop infowindow
@@ -241,6 +252,8 @@ $(document).ready(function() {
 
             google.maps.event.addListenerOnce(this.googleInfoWindow, 'domready', this.onDOMInfoWindowReady.bind(this));
             google.maps.event.addListenerOnce(this.googleInfoWindow, 'closeclick', function() {
+                // Prevent active marker DOM from being destroyed by google map!
+                $('body').append(this.$infoWindow); // append back to body
                 var map = this.attachedMap;
                 // Make sure this marker is no longer active when closed
                 if (map != null && map.activeMarker === this) {
@@ -249,9 +262,11 @@ $(document).ready(function() {
                 this.isInfoWindowOpen(false);
                 this.isFocus(false);
             }.bind(this));
+            this.attachPano();
+            this.googleInfoWindow.setContent(this.$infoWindow.get(0));
 
-            this.googleInfoWindow.setContent(fragment);
             var marker = this.googleMarker;
+
             this.googleInfoWindow.open(marker.getMap(), marker);
         } else {
             // Display modal for devices with width < 768px
@@ -421,9 +436,11 @@ $(document).ready(function() {
      *
      * @param {HTMLElement} fragment - The fragment returned from getInfoWindowcontent()
      */
-    Marker.prototype.attachPano = function(fragment) {
-        var panoDiv = $(fragment).find('#' + this.panoId)[0];
+    Marker.prototype.attachPano = function() {
+        //var panoDiv = $(fragment).find('#' + this.panoId)[0];
+        var panoDiv = this.$infoWindow.find('#myPano')[0];
 
+        console.log(panoDiv);
         // Append panorama view to fragment
         if (this.panoData != null) {
             //Pano custom options
@@ -528,15 +545,15 @@ $(document).ready(function() {
         // Markers currently on map
         self.markers = myMap.markers;
 
-        // Search bar used to make foursquare queries and filter map markers
+        // Search bar input value used for making foursquare queries and filtering map's markers
         self.searchBar = ko.observable('');
 
-        // When checked, listpanel will auto focus map on the hovered list item (marker).
+        // When checked, list view will auto focus map on the hovered list item (marker).
         self.autoFocus = ko.observable(false);
 
         // search bar radio button
         // value: search, uses search bar input to make foursquare query when user presses enter
-        // value filter, uses search bar input to filter markers on the map and listpanel
+        // value: filter, uses search bar input to filter markers on the map and list view
         self.radioOption = ko.observable('search');
 
         // When changing radioOption value from filter to search, make sure all markers are
@@ -660,7 +677,7 @@ $(document).ready(function() {
         self.listPanel = new ListView(self);
 
         // Last timeout tracker used in addMarker
-        self.activeMarker = null;
+        self.activeMarker = ko.observable(null);
 
         /**
          * Makes a foursquare query using the exploreObject.
@@ -671,7 +688,7 @@ $(document).ready(function() {
         self.searchQuery = function (exploreObject) {
 
             // Clear the map before making a new query
-            self.activeMarker = null;
+            self.activeMarker(null);
             self.removeMarkers();
 
             // Make a query using the explore object
@@ -707,6 +724,7 @@ $(document).ready(function() {
                                     if (status == google.maps.StreetViewStatus.OK) {
                                         // save pano to marker
                                         this.panoData = data.location.pano;
+                                        this.containsPano(true);
                                     }
                                 }.bind(marker));
                                 bounds.extend(marker.googleMarker.getPosition());
@@ -743,20 +761,20 @@ $(document).ready(function() {
         self.setActiveMarker = function (marker) {
 
             // if they're the same close infoWindow and set active marker to null
-            if (self.activeMarker === marker) {
+            if (self.activeMarker() === marker) {
+                self.activeMarker(null);
                 marker.closeInfoWindow();
-                self.activeMarker = null;
             } else {
 
-                if (self.activeMarker !== null) // close previous active marker
-                    self.activeMarker.closeInfoWindow();
+                if (self.activeMarker() !== null) // close previous active marker
+                    self.activeMarker().closeInfoWindow();
 
-                self.activeMarker = marker; // set new active marker
+                self.activeMarker(marker); // set new active marker
 
                 // open marker's infoWindow and center it on map
                 marker.openInfoWindow();
-                self.activeMarker.updateZIndex();
-                self.centerOnMarker(self.activeMarker.googleMarker.getPosition());
+                marker.updateZIndex();
+                self.centerOnMarker(marker.googleMarker.getPosition());
             }
 
         };
