@@ -1,6 +1,7 @@
 $(document).ready(function() {
     'use strict';
 
+    // Model used to initialize google map
     var mapConfig = {
         canvasId: 'map-canvas',
         panelId: 'myPanel',
@@ -158,12 +159,6 @@ $(document).ready(function() {
 
         self.panoData = null;
 
-        // objects that get attached to this marker
-        self.attached = {
-            map: null,
-            infoWindow: null
-        };
-
         // observables to keep track of marker's state
         self.isFocus = ko.observable(false);
         self.isMouseOver = ko.observable(false);
@@ -181,10 +176,7 @@ $(document).ready(function() {
             animation: google.maps.Animation.DROP
         });
 
-        // Info window to display when the marker is clicked
-        // setContent is called right before infowindow opens
-        self.attached.infoWindow = new google.maps.InfoWindow({});
-
+        self.attachedMap = null;
 
         // notify the attached map when marker is clicked
         google.maps.event.addListener(self.googleMarker, 'click', self.click.bind(this));
@@ -192,17 +184,6 @@ $(document).ready(function() {
         // Event listeners to update the marker's observables
         google.maps.event.addListener(self.googleMarker, 'mouseover', self.mouseover.bind(this));
         google.maps.event.addListener(self.googleMarker, 'mouseout', self.mouseout.bind(this));
-
-        google.maps.event.addListener(self.attached.infoWindow, 'domready', self.onDOMInfoWindowReady.bind(this));
-        google.maps.event.addListener(self.attached.infoWindow, 'closeclick', function() {
-            var map = self.attached.map;
-            // Make sure this marker is no longer active when closed
-            if (map != null && map.activeMarker === self) {
-                map.activeMarker = null;
-            }
-            this.isInfoWindowOpen(false);
-            this.isFocus(false);
-        });
 
     };
 
@@ -217,26 +198,30 @@ $(document).ready(function() {
     Marker.prototype.HOVER = 'http://mts.googleapis.com/vt/icon/name=icons/spotlight/spotlight-waypoint-blue.png&scale=1';
     Marker.prototype.ACTIVE = 'https://mt.google.com/vt/icon?psize=24&font=fonts/Roboto-Regular.ttf&color=ff330000&name=icons/spotlight/spotlight-waypoint-a.png&ax=44&ay=48&scale=1&text=•';
 
+    // All the markers share a infoWindow instance, so only one info window can be opened at a time.
+    // I chose this route because having multiple info windows makes the look cluttered.
+    Marker.prototype.googleInfoWindow = new google.maps.InfoWindow({});
+    Marker.prototype.$modalInfoWindow = $('#myModal'); // Use a modal to display info window with width < 768px
+
+
     /**
-     * Closes this marker's infoWindow and updates
+     * Closes this marker's info window and updates
      * its observables. (isInfoWindowOpen(), isFocus())
      */
     Marker.prototype.closeInfoWindow = function() {
         this.isInfoWindowOpen(false);
         this.isFocus(false);
 
-        var $modal = $('#myModal');
+        var $modal = this.$modalInfoWindow;
         if ($modal.hasClass('in')) {
             $modal.modal('hide');
         } else {
-            this.attached.infoWindow.close();
+            this.googleInfoWindow.close();
         }
-
-
     };
 
     /**
-     * Opens this marker's infoWindow and updates
+     * Opens this marker's info window and updates
      * its observables (isInfoWindowOpen(), isFocus()).
      *
      * When the map is in desktop mode, it
@@ -252,23 +237,35 @@ $(document).ready(function() {
 
 
         // Display desktop infowindow
-        if (this.attached.map.isDesktopMode) {
-            this.attached.infoWindow.setContent(fragment);
+        if (this.attachedMap.isDesktopMode) {
+
+            google.maps.event.addListenerOnce(this.googleInfoWindow, 'domready', this.onDOMInfoWindowReady.bind(this));
+            google.maps.event.addListenerOnce(this.googleInfoWindow, 'closeclick', function() {
+                var map = this.attachedMap;
+                // Make sure this marker is no longer active when closed
+                if (map != null && map.activeMarker === this) {
+                    map.activeMarker = null;
+                }
+                this.isInfoWindowOpen(false);
+                this.isFocus(false);
+            }.bind(this));
+
+            this.googleInfoWindow.setContent(fragment);
             var marker = this.googleMarker;
-            this.attached.infoWindow.open(marker.getMap(), marker);
+            this.googleInfoWindow.open(marker.getMap(), marker);
         } else {
             // Display modal for devices with width < 768px
             this.loadModal(fragment);
             this.isMouseOver(false); // fixes the marker's color on mobile devices
 
             // Attach a listener to update isInfoWindowOpen() when modal closes
-            $('#myModal').on('hide.bs.modal', function() {
+            this.$modalInfoWindow.on('hide.bs.modal', function() {
 
                 this.isInfoWindowOpen(false);
                 this.isFocus(false);
 
                 // Unbind listener when modal closes
-                $('#myModal').unbind();
+                this.$modalInfoWindow.unbind();
             }.bind(this));
         }
 
@@ -292,12 +289,11 @@ $(document).ready(function() {
 
     /**
      * Sets isMouseOver to true.
-     * When mouseover is triggered by google map, it make sure the marker is visible inside list panel by auto scrolling.
-     * If event is triggered by the list panel and auto focus is checked, it will center map on marker.
+     * When mouseover is triggered by google map, it make sure the marker is visible inside list view by auto scrolling.
+     * If event is triggered by the list view and auto focus is checked, it will center map on marker.
      * @param {(google.maps.MouseEvent|boolean)} event
      */
     Marker.prototype.mouseover = function (event) {
-        console.log(event);
         this.isMouseOver(true);
 
         // If event is coming from google map
@@ -306,7 +302,7 @@ $(document).ready(function() {
             $('#list-items').scrollTo('#'+this.id, 200);
 
         } else if (event === true) { // If event is from listPanel and auto focus is checked
-            var map = this.attached.map;
+            var map = this.attachedMap;
             if (map != null) {
                 // center map on marker
                 map.centerOnMarker(this.googleMarker.getPosition());
@@ -331,10 +327,10 @@ $(document).ready(function() {
      * Tells the attached map that this is the current active marker.
      *
      * This method gets called when the marker is clicked from the google map or
-     * the list panel.
+     * the list view.
      */
     Marker.prototype.click = function () {
-        var myMap = this.attached.map;
+        var myMap = this.attachedMap;
         if (myMap != null) {
             myMap.setActiveMarker(this);
         }
@@ -347,17 +343,17 @@ $(document).ready(function() {
     Marker.prototype.updateZIndex = function () {
         var zIndex = Marker.zIndex++;
         this.googleMarker.setZIndex(zIndex);
-        this.attached.infoWindow.setZIndex(zIndex);
+        this.googleInfoWindow.setZIndex(zIndex);
     };
 
     /**
-     * Attaches the mapViewModal and its googleMap to this marker.
+     * Attaches the mapViewModel and its googleMap to this marker.
      * Passing the value null will remove marker from map.
-     * @param {MapViewModal} mapViewModal
+     * @param {MapViewModel} mapViewModel
      */
-    Marker.prototype.setMyMap = function (mapViewModal) {
-        var googleMap = (mapViewModal) ? mapViewModal.googleMap : null;
-        this.attached.map = mapViewModal;
+    Marker.prototype.setMyMap = function (mapViewModel) {
+        var googleMap = (mapViewModel) ? mapViewModel.googleMap : null;
+        this.attachedMap = mapViewModel;
         this.googleMarker.setMap(googleMap);
     };
 
@@ -365,7 +361,7 @@ $(document).ready(function() {
      * Creates the marker's info window content using the
      * html template (#foursquareTemplate)
      *
-     * @returns {HTMLElement} - infowindow content
+     * @returns {HTMLElement} - info window content
      */
     Marker.prototype.getInfoWindowcontent = function () {
         var content = $('#foursquareTemplate').html();
@@ -405,7 +401,7 @@ $(document).ready(function() {
 
         var height;
         // Adjust info window height
-        if (this.attached.map.isDesktopMode) {
+        if (this.attachedMap.isDesktopMode) {
             // Make info window 200px when if it doesn't a panorama
             height = (this.panoData != null) ? '360px' : '200px';
         } else {
@@ -440,7 +436,7 @@ $(document).ready(function() {
                 pano: this.panoData,
                 navigationControlOptions: { style: google.maps.NavigationControlStyle.ANDROID }
             };
-            //add pano to infowindow
+            //add pano to info window
             this.panorama = new google.maps.StreetViewPanorama(panoDiv, panoOptions);
         } else {
             $(panoDiv).html('<p><strong>Street View data not found for this location.</strong></p>');
@@ -454,18 +450,25 @@ $(document).ready(function() {
      */
     Marker.prototype.loadModal = function(fragment) {
 
-        $($('.modal-title').get(0)).html($(fragment).find('#title'));
-        $($('.modal-body').get(0)).html(fragment);
+        var $modal = this.$modalInfoWindow;
+        var $title = $modal.find('.modal-title').first();
+        var $body = $modal.find('.modal-body').first();
 
-        $('#myModal').modal('show');
+        $title.html($(fragment).find('#title'));
+        $body.html(fragment);
 
+        $modal.modal('show');
+
+        // if this marker has a pano, display it!
         if (this.panorama != null) {
             this.panorama.setVisible(true);
         }
     };
 
     /**
-     * Sets a click listener to the third parent of infoWindow element.
+     * This method is called when the div containing the InfoWindow's content is attached to the DOM.
+     * When called, it will modify googles generate dom element to expand infoWidow's content to 100%.
+     * If the device is not an IE browser, remove any highlighted text. (Some bug I had to work around)
      */
     Marker.prototype.onDOMInfoWindowReady = function () {
 
@@ -473,42 +476,49 @@ $(document).ready(function() {
         var container = $('.gm-style-iw')[0].firstChild;
         $(container).css('width', '100%');
 
+        // if this marker has a pano, display it!
         if (this.panorama) {
             this.panorama.setVisible(true);
         }
-        if (window.getSelection) {
+
+        // If you rapidly double click on the marker, its info window would sometimes
+        // get fully highlighted prior to opening. A work around this issue is to
+        // simply clear the text selection lol I'm pretty certain this issue arised when
+        // expading container width to 100%
+        if (!bowser.msie) { // Ignore IE browser
             var sel = window.getSelection();
-            if (sel.collapseToEnd) {
-                sel.collapseToEnd();
+            if (sel) {
+                if (sel.collapseToEnd) {
+                    sel.collapseToEnd(); // Clear selected text
+                }
             }
         }
-
     };
 
     /**
-     * Creates a list panel
-     * What does the list panel do?
+     * Creates a list view
+     * What does the list view do?
      *  - Displays a list of all the markers attached to myMap
      *  - Provides custom search using foursquare api e.g (pizza near new york city)
-     *  - Provides search filter (hides unmatched markers on map and list panel)
+     *  - Provides search filter (hides unmatched markers on map and list view)
      *  - When auto focus is checked, centers map on the hovered list item
-     * @param myMap {MapViewModal} myMap
+     * @param myMap {MapViewModel} myMap
      * @constructor
      */
-    var ListPanel = function (myMap) {
+    var ListView = function (myMap) {
 
         var self = this;
 
-        // List panel visible state
-        // setting this to false collapses the list panel
+        // list view visible state
+        // setting this to false collapses the list view
         self.isVisible = ko.observable(true);
 
-        // collapses/expands list panel
+        // collapses/expands list view
         self.toggle = function () {
             self.isVisible(!self.isVisible());
         };
 
-        // The list panel title
+        // The list view title
         self.title = ko.pureComputed(function () {
             return self.isVisible() ? 'Hide List' : 'Show List';
         });
@@ -559,7 +569,7 @@ $(document).ready(function() {
         });
 
         /**
-         * Returns the markers the filtered markers
+         * Returns filtered markers
          * When radio option is equal to 'search', this method will simply return self.markers(). (all markers)
          * Any other value it will iterate through the array and
          * hide/show the appropriate markers, while keeping infoWindow in sync.
@@ -626,7 +636,7 @@ $(document).ready(function() {
      * @param mapConfig - map initialier object
      * @constructor
      */
-    var MapViewModal = function (mapConfig) {
+    var MapViewModel = function (mapConfig) {
         var self = this;
 
         // Create google map
@@ -646,8 +656,8 @@ $(document).ready(function() {
         // Initialize observable array to hold the map's markers
         self.markers = ko.observableArray([]);
 
-        // Create a list panel
-        self.listPanel = new ListPanel(self);
+        // Create a list view
+        self.listPanel = new ListView(self);
 
         // Last timeout tracker used in addMarker
         self.activeMarker = null;
@@ -688,7 +698,7 @@ $(document).ready(function() {
                                 var marker = new Marker(data.response.venue);
 
                                 marker.setMyMap(self);// attach marker on map
-                                // add marker to observable array (adds marker to list panel)
+                                // add marker to observable array (adds marker to list view)
                                 self.markers.push(marker);
                                 marker.updateZIndex();
 
@@ -786,8 +796,9 @@ $(document).ready(function() {
 
                 var marker = self.activeMarker;
                 if (marker !== null) {
-                    marker.closeInfoWindow(); // close current infoWindow (modal or google's infowindow)
-                    marker.openInfoWindow(); // reopen
+                    // reset
+                    marker.closeInfoWindow();
+                    marker.openInfoWindow();
                 }
             }
 
@@ -796,12 +807,15 @@ $(document).ready(function() {
 
 
     };
+    // highest zIndex
+    MapViewModel.zIndex = 0;
 
-    // Create a mapViewModal
-    var mapViewModal = new MapViewModal(mapConfig);
-    ko.applyBindings(mapViewModal);
+
+    // Create a mapViewModel
+    var mapViewModel = new MapViewModel(mapConfig);
+    ko.applyBindings(mapViewModel);
     // Make initial query
-    mapViewModal.searchQuery(mapConfig.explore);
+    mapViewModel.searchQuery(mapConfig.explore);
 
 
 });
