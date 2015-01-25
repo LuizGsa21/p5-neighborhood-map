@@ -1,4 +1,7 @@
 p5-neighborhood-map
 ===================
 
-Project 5 neighborhood map
+Work in progress...
+
+Live demo [here](http://luizgsa21.github.io/p5-neighborhood-map/).
+
