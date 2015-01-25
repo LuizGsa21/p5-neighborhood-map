@@ -262,7 +262,7 @@ button {
     .placeInfo {
         width: 100%;
         height: 100%;
-        max-width: none;
+        min-width: 100%;
     }
 
     .foursquare {
@@ -278,7 +278,7 @@ button {
 
     .contactInfo p {
         max-width: 50%;
-        /*white-space: nowrap;*/
+        white-space: nowrap;
     }
 
     .panorama {
