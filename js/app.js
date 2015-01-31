@@ -851,7 +851,7 @@ $(document).ready(function() {
 
         }, false);
 
-        if (!bowser.msie) {
+        if (bowser.msie) {
             self.setAlertMessage("No one likes Internet Explore. Get a new browser ;)");
             self.startAlertMessage(true);
         }
