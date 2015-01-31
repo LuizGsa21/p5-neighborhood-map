@@ -765,7 +765,7 @@ $(document).ready(function() {
                     }
 
 
-                } else if(messageCode === 500) { // Alert the user of custom message
+                } else if(messageCode === 500) { // Alert the user using a custom message
 
                     self.startAlertMessage(true);
                     self.setAlertMessage("Foursquare’s servers are unhappy. Please try again.");
