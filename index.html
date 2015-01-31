@@ -4,7 +4,7 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<!--<meta name="viewport" content="initial-scale=1.0, user-scalable=no">-->
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 		<title>Neighborhood Map</title>
 		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1szx1heFDJTMTvu1EvowyBQb2ib-kfJI&libraries=places"></script>
 		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>-->
@@ -15,6 +15,7 @@
 		<script src="js/vendor/knockout-3.2.0.debug.js"></script>
 		<!--<script src="js/vendor/bowser.js"></script>-->
 		<link rel="stylesheet" href="css/bootstrap.css"/>
+		<link rel="stylesheet" href="css/custom.css"/>
 
 		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -22,7 +23,6 @@
 		<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 		<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
-		<link rel="stylesheet" href="css/custom.css"/>
 		<script src="js/vendor/bootstrap.js"></script>
 		<script src="js/app.js"></script>
 	<body>
@@ -34,20 +34,26 @@
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-body">
-
+					<div data-bind="isVisible: startAlertMessage"><p class="alert-message" data-bind="text: setAlertMessage"></p></div>
 					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					</div>
+					<!--<div class="modal-footer">-->
+						<!--<button type="button" class="btn" data-dismiss="modal">Close</button>-->
+					<!--</div>-->
 				</div><!-- /.modal-content -->
 			</div><!-- /.modal-dialog -->
 		</div><!-- /.modal -->
 
-	<div data-bind="with: activeMarker" id="infoWindow" class="placeInfo">
-			<h2 id="title" class="text-align-center">
-				<a data-bind="text: name, attr: { href: website }" target="_blank"></a>
-			</h2>
+	<div id="infoWindow" data-bind="with: activeMarker" class="placeInfo">
 			<div class="foursquare">
+				<div data-bind="visible: !attachedMap.isDesktopMode()" class="close">
+					<button type="button"
+					        class="btn pull-right"
+					        data-dismiss="modal">Close
+					</button>
+				</div>
+				<h2 id="title" class="text-align-center">
+					<a data-bind="text: name, attr: { href: website }" target="_blank"></a>
+				</h2>
 				<div class="contactInfo">
 					<p class="address">
 						<strong>Location:<br></strong>
@@ -66,7 +72,7 @@
 						<a target="_blank" data-bind="attr: { href: fsWebsite }">More Info</a>
 					</p>
 				</div>
-				<div id="myPano" data-bind="css: panoCSS"></div>
+				<div id="myPano" class="noselect" data-bind="css: panoCSS"></div>
 			</div>
 	</div>
 
@@ -91,7 +97,7 @@
 				<input type="radio" name="type" value="filter" data-bind="checked: radioOption" id="filter-list">
 				<label for="filter-list">Filter</label>
 
-				<div class="pull-right">
+				<div id="auto-options" class="pull-right">
 					<input type="checkbox" name="type" value="search" data-bind="checked: autoClose" id="auto-close">
 					<label for="auto-close">Auto Close</label>
 					<input type="checkbox" name="type" value="search" data-bind="checked: autoFocus" id="auto-hide">

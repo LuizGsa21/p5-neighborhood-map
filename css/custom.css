@@ -18,84 +18,10 @@ body,
     padding: 0px;
 }
 
-.panorama {
-    min-height: 200px;
-    width: 100%;
-    display: block;
-}
-
-.no-panorama {
-    text-align: center;
-}
-
-label {
-    padding: 3px;
-}
-/** Info Window CSS **/
-
-/* container  */
-.placeInfo {
-    margin: 0 auto;
-    overflow: auto;
-    padding: 5px 0;
-    width: 100%;
-    min-width: 350px;
-    max-width: 400px;
-}
-
-
-/* Foursquare contents */
-.foursquare {
-    position: relative;
-    line-height: 1.4em;
-    height: 100%;
-}
-
-.contactInfo {
-    width: 100%;
-    min-height: 100px;
-    padding-top: 10px;
-}
-
-.contactInfo p {
-    margin: 0.5em 0 0.2em 0;
-}
-
-.address {
-    width: 50%;
-    float: left;
-}
-
-#title {
-    padding: 0 10px 0 0;
-    margin: 0;
-    width: 100%;
-    border-bottom: 1px solid lightblue;
-}
-
-#title a {
-    display: inline-block;
-    overflow: hidden;
-}
-
-
-.rating, .moreInfo-link {
-    text-align: right;
-    float: right;
-    clear: right;
-    white-space: nowrap;
-}
-
-.phone {
-    float: right;
-    margin-top: 0;
-}
-/** ./Info Window CSS **/
-
 /** List Panel **/
 #listPanel {
     width: 380px;
-    min-height: 45px;
+    height: auto;
     max-height: 450px;
     z-index: 3;
     position: fixed;
@@ -236,16 +162,98 @@ button {
     outline: none;
 }
 /* ./ button panel */
-
-
-
 /** ./List Panel **/
 
-/** Mobile devices **/
+
+label {
+    padding: 3px;
+}
+/** Info Window CSS **/
+
+/* container  */
+.placeInfo {
+    margin: 0 auto;
+    overflow: auto;
+    padding: 5px 0;
+    width: 100%;
+    min-width: 350px;
+    max-width: 400px;
+}
+
+
+/* Foursquare contents */
+.foursquare {
+    position: relative;
+    line-height: 1.4em;
+    height: 100%;
+}
+
+.contactInfo {
+    width: 100%;
+    min-height: 100px;
+    padding-top: 10px;
+}
+
+.contactInfo p {
+    margin: 0.5em 0 0.2em 0;
+}
+
+.address {
+    width: 50%;
+    float: left;
+}
+
+#title {
+    padding: 0 10px 0 0;
+    margin: 0;
+    width: 100%;
+    border-bottom: 1px solid lightblue;
+}
+
+#title a {
+    display: inline-block;
+    overflow: hidden;
+}
+
+
+.rating, .moreInfo-link {
+    text-align: right;
+    float: right;
+    clear: right;
+    white-space: nowrap;
+}
+
+.phone {
+    float: right;
+    margin-top: 0;
+}
+
+.panorama {
+    min-height: 200px;
+    width: 100%;
+    display: block;
+}
+
+.no-panorama {
+    text-align: center;
+}
+/** ./Info Window CSS **/
+
+.alert-message {
+    position: relative;
+    text-align: center;
+    top: 50%;
+    height: 100%;
+    line-height: 1.6em;
+}
+
+
+/** Tablets **/
 @media screen and (max-width: 768px)  {
     #listPanel {
         width: 100%;
         margin: 0;
+        height: auto;
         max-height: 100%;
     }
 
@@ -266,8 +274,7 @@ button {
     }
 
     .foursquare {
-        line-height: 1.5em;
-        height: 95%;
+        height: 100%;
     }
 
     .contactInfo {
@@ -288,15 +295,8 @@ button {
     }
 
     #title {
-        /*height: auto;*/
         padding-bottom: 10px;
-        display: inline-flex;
-        justify-content: center;
-    }
-
-    #title a {
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        padding-left: 60px;
     }
 
     .modal-dialog {
@@ -313,46 +313,51 @@ button {
 
     .modal-body {
         width: 100%;
-        height: 90%;
+        height: 100%;
         margin: 0;
     }
-    .modal-footer {
-        height: auto;
+
+    .btn {
+        background-image: linear-gradient(rgb(94, 148, 255) 0%, rgb(85, 140, 251) 100%);
+        color: #fff;
+        font-size: 1em;
+        padding: 0.5em 0.5em;
+        text-decoration: none;
+    }
+
+    .btn:hover {
+        background: #3cb0fd linear-gradient(to bottom, #3cb0fd, #3498db);
+        text-decoration: none;
+    }
+
+    .close {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 95%;
-        margin: 0 auto;
-        padding: 10px 25px 16px 10px;
-        border-top: 1px solid lightblue;
+        top: -5px;
     }
+
 }
+/** ./tablets **/
 
-/* Make list panel smaller and move the modal's close button to the top left corner */
-@media screen and (max-height: 480px) {
-
-    #list-items {
-        max-height: 200px;
-    }
-
-    .modal-footer {
-        width: initial;
-        top: 0;
-        left: 0;
-        bottom: auto;
-        right: auto;
-    }
-    .modal-body {
-        padding-top: 0;
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen
+/*and (min-device-width : 320px)*/
+and (max-device-width : 480px) {
+    /* Styles */
+    .modal-dialog {
+        width: 100%;
         height: 100%;
+        padding: 0;
+        margin:0;
+    }
+    .modal-content {
+        height: 100%;
+        border-radius: 0;
     }
 
-    #title {
-        float: right;
-        text-align: center;
-        padding-left: 45px;
-        padding-bottom: 5px;
+    #searchBar {
+        font-size: 12px;
     }
-
+    #auto-options {
+        display: none;
+    }
 }
