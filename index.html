@@ -7,13 +7,10 @@
 		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 		<title>Neighborhood Map</title>
 		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1szx1heFDJTMTvu1EvowyBQb2ib-kfJI&libraries=places"></script>
-		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>-->
-		<script src="js/vendor/jquery.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 		<script src="js/vendor/jquery.scrollTo.min.js"></script>
 		<script src="js/vendor/bowser.js"></script>
-
 		<script src="js/vendor/knockout-3.2.0.debug.js"></script>
-		<!--<script src="js/vendor/bowser.js"></script>-->
 		<link rel="stylesheet" href="css/bootstrap.css"/>
 		<link rel="stylesheet" href="css/custom.css"/>
 
@@ -31,17 +28,25 @@
 
 		<!-- Modal (displays info window contents for devices with < 786px width) -->
 		<div class="modal fade" id="myModal">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-body">
-					<div data-bind="isVisible: startAlertMessage"><p class="alert-message" data-bind="text: setAlertMessage"></p></div>
+			<div class="modal-dialog infowindow-modal-dialog">
+				<div class="modal-content infowindow-modal-content">
+					<div class="modal-body infowindow-modal-body">
 					</div>
-					<!--<div class="modal-footer">-->
-						<!--<button type="button" class="btn" data-dismiss="modal">Close</button>-->
-					<!--</div>-->
 				</div><!-- /.modal-content -->
 			</div><!-- /.modal-dialog -->
 		</div><!-- /.modal -->
+
+	<!-- Alert modal -->
+	<div class="modal fade" id="alertModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div data-bind="isVisible: startAlertMessage"><p class="alert-message" data-bind="text: setAlertMessage"></p></div>
+				</div>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+	<!-- ./ Alert modal -->
 
 	<div id="infoWindow" data-bind="with: activeMarker" class="placeInfo">
 			<div class="foursquare">
@@ -105,7 +110,7 @@
 				</div>
 			</div><!-- ./Search bar options -->
 			<!-- List items -->
-			<div  style="height: 76%; width: 100%; overflow: hidden" data-bind="visible: isVisible">
+			<div class="list-item-container" data-bind="visible: isVisible">
 				<ol type="1" id="list-items"
 				    data-bind="foreach: { data: filteredMarkers, as: 'marker' }">
 					<li class="item" data-bind="event: {

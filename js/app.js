@@ -672,11 +672,11 @@ $(document).ready(function() {
         self.setAlertMessage = ko.observable("");
         self.startAlertMessage.subscribe(function(failed) {
             if (failed) {
-                $('#myModal').modal('show');
+                $('#alertModal').modal('show');
                 // reset startAlertMessage back to false when modal closes
-                $('#myModal').on('hide.bs.modal', function () {
+                $('#alertModal').on('hide.bs.modal', function () {
                     self.startAlertMessage(false);
-                    $('#myModal').unbind();
+                    $('#alertModal').unbind();
                 });
             }
         });

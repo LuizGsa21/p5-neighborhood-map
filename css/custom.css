@@ -76,6 +76,12 @@ body,
 /* ./search bar option menu */
 
 /* list items */
+.list-item-container {
+    height: 76%;
+    width: 100%;
+    overflow: hidden
+}
+
 #list-items {
     list-style-position: inside;
     background-color: white;
@@ -299,19 +305,19 @@ label {
         padding-left: 60px;
     }
 
-    .modal-dialog {
+    .infowindow-modal-dialog {
         width: 98%;
         height: 98%;
         margin: 0 auto;
         padding: 1%;
     }
 
-    .modal-content {
+    .infowindow-modal-content {
         width: 100%;
         height: 100%;
     }
 
-    .modal-body {
+    .infowindow-modal-body {
         width: 100%;
         height: 100%;
         margin: 0;
@@ -343,13 +349,13 @@ label {
 /*and (min-device-width : 320px)*/
 and (max-device-width : 480px) {
     /* Styles */
-    .modal-dialog {
+    .infowindow-modal-dialog {
         width: 100%;
         height: 100%;
         padding: 0;
         margin:0;
     }
-    .modal-content {
+    .infowindow-modal-content {
         height: 100%;
         border-radius: 0;
     }
