@@ -861,7 +861,9 @@ $(document).ready(function() {
         }, false);
 
         if (bowser.msie) {
-            self.setAlertMessage("No one likes Internet Explore. Get a new browser ;)");
+            self.setAlertMessage(
+              "It looks like you're using Internet Explore! You may continue to use this " +
+              "application but I would advise on getting a new browser. ;)");
             self.startAlertMessage(true);
         }
 
