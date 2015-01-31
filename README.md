@@ -9,7 +9,7 @@ To search for venues in a location, use the keyword "**near**" followed by "**lo
 - tacos near Baton Rouge
 
 ## References
-- [Google Maps JavaScript API v3](https://developers.google.com/maps/documentation/javascript/)
+- [Google Maps JavaScript API v3](https://developers.google.com/maps/documentation/javascript/reference)
 - [KnockoutJS](http://knockoutjs.com/)
 - [jQuery](http://api.jquery.com/)
 - [Foursquare](https://developer.foursquare.com/)
