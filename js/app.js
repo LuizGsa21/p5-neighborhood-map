@@ -708,7 +708,8 @@ $(document).ready(function() {
 
             // Make a query using the explore object
             self.fsService.explore(exploreObject, function(data) {
-                if (data.meta.code === 200) {
+                var messageCode = data.meta.code;
+                if (messageCode === 200) {
 
                     // extract venue items from result
                     var items = data.response.groups[0].items;
@@ -764,8 +765,11 @@ $(document).ready(function() {
                     }
 
 
-                } else {
-                    // Alert the user of request failed
+                } else if(messageCode === 500) { // Alert the user of custom message
+
+                    self.startAlertMessage(true);
+                    self.setAlertMessage("Foursquare’s servers are unhappy. Please try again.");
+                } else { // alert the user using Foursquare's errorDetail message
                     self.startAlertMessage(true);
                     self.setAlertMessage(data.meta.errorDetail);
                 }
