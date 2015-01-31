@@ -10,7 +10,16 @@ $(document).ready(function() {
             zoom: 12,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             disableDefaultUI: true,
-            noClear: true
+            noClear: true,
+            styles: [
+                {
+                    featureType: "poi",
+                    elementType: "labels",
+                    stylers: [
+                        { visibility: "off" }
+                    ]
+                }
+            ]
         },
         explore: { // Foursquare explore search object
             near: 'baton rouge, LA',
