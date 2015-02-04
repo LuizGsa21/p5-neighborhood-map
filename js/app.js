@@ -824,7 +824,7 @@ $(document).ready(function() {
         });
 
         // When isDesktopMode == false, a modal will be used to display the info window
-        self.isDesktopMode = ko.observable(window.matchMedia("screen and (min-width: 768px)").matches);
+        self.isDesktopMode = ko.observable(window.matchMedia("screen and (min-width: 769px)").matches);
 
         // Used for Indicating if the browser is beign resized
         self.isResizing = false;
@@ -832,7 +832,7 @@ $(document).ready(function() {
         window.addEventListener('resize', function () {
 
             // get browser current mode using media query to gaurantee precision
-            var mql = window.matchMedia("screen and (min-width: 768px)");
+            var mql = window.matchMedia("screen and (min-width: 769px)");
             var displayMode = mql.matches;
 
             // Only update infowindow when needed
