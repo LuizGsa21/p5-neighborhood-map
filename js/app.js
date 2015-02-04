@@ -466,32 +466,20 @@ $(document).ready(function() {
 
     /**
      * This method is called when the div containing the InfoWindow's content is attached to the DOM.
-     * When called, it will modify googles generate dom element to expand infoWidow's content to 100%.
-     * If the device is not an IE browser, remove any highlighted text. (Some bug I had to work around)
+     * It will modify the infoWindow's container to 'overflow: visible' to properly display
+     * the info window content.
      */
     Marker.prototype.onDOMInfoWindowReady = function () {
 
         // Edit google's generated element to expand infoWindow content 100%
-        var container = $('.gm-style-iw')[0].firstChild;
-        $(container).css('width', '100%');
+        var container = $($('.placeInfo')[0]).parent();
+        $(container).css('overflow', 'visible');
 
         // if this marker has a pano, display it!
         if (this.panorama) {
             this.panorama.setVisible(true);
         }
 
-        // When rapidly double clicking on the marker, its info window would sometimes
-        // get fully highlighted prior to opening. A work around this issue is to
-        // simply clear the text selection lol I'm pretty sure this issue arised when
-        // expading container width to 100%
-        if (!bowser.msie) { // Ignore IE browser
-            var sel = window.getSelection();
-            if (sel) {
-                if (sel.collapseToEnd) {
-                    sel.collapseToEnd(); // Clear selected text
-                }
-            }
-        }
     };
 
     /**
