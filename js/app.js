@@ -293,7 +293,6 @@ $(document).ready(function() {
             var marker = this.googleMarker;
 
             this.googleInfoWindow.open(marker.getMap(), marker);
-            console.log(this.attachedMap.activeMarker());
         } else {
 
             // fixes the marker's color on mobile devices
@@ -410,7 +409,6 @@ $(document).ready(function() {
      * the list view.
      */
     Marker.prototype.click = function () {
-        console.log(this);
         var myMap = this.attachedMap;
         if (myMap != null) {
             myMap.setActiveMarker(this);
