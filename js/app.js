@@ -1,5 +1,9 @@
-$(document).ready(function() {
-    'use strict';
+'use strict';
+
+/**
+ * Gets called when google maps is initialized after the DOM has loaded
+ **/
+function initialize() {
 
     // Model used to initialize google map
     var mapConfig = {
@@ -655,11 +659,6 @@ $(document).ready(function() {
             }
         });
 
-        if(!google || !google.maps){
-            self.setAlertMessage("Failed to load google maps.");
-            self.startAlertMessage(true);
-        }
-
         // Create google map
         self.googleMap = new google.maps.Map(document.getElementById(mapConfig.canvasId), mapConfig.options);
 
@@ -668,10 +667,10 @@ $(document).ready(function() {
 
         // Create foursquare service object
         self.fsService = new FourSquareService(
-          'DNHYJ5KY031FDOFXBAFROUXSDHJBLLFVKIBX5FVO10QWSU3J', // appId
-          'TLJHOC3BO5LFV31JB3VTXTRGZYXWG5DJISR3M3STUXR14Q4J',  // secretKey
-          '20140806', // version
-          'foursquare' // mode
+            'DNHYJ5KY031FDOFXBAFROUXSDHJBLLFVKIBX5FVO10QWSU3J', // appId
+            'TLJHOC3BO5LFV31JB3VTXTRGZYXWG5DJISR3M3STUXR14Q4J',  // secretKey
+            '20140806', // version
+            'foursquare' // mode
         );
 
         // Initialize observable array to hold the map's markers
@@ -889,8 +888,8 @@ $(document).ready(function() {
 
         if (bowser.msie) {
             self.setAlertMessage(
-              "It looks like you're using Internet Explore! You may continue to use this " +
-              "application but I would advise on getting a new browser. ;)");
+                "It looks like you're using Internet Explore! You may continue to use this " +
+                "application but I would advise on getting a new browser. ;)");
             self.startAlertMessage(true);
         }
 
@@ -902,6 +901,18 @@ $(document).ready(function() {
 
     // Make initial query
     mapViewModel.searchQuery(mapConfig.explore);
+}
 
+$(document).ready(function() {
 
+    // Check if google map had been initialized
+    if (typeof google === 'object' && typeof google.maps === 'object') {
+        initialize();
+    } else {
+        // Notify the user that google maps failed to load
+        $('.alert-message').html('Failed to load google maps! Please try again by refreshing the page.');
+        $('#alertModal').modal('show');
+
+        $('#listPanel').css('display', 'none');
+    }
 });
