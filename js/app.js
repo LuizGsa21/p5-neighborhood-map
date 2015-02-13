@@ -639,6 +639,27 @@ $(document).ready(function() {
     var MapViewModel = function (mapConfig) {
         var self = this;
 
+        // Pops up a modal alert message when
+        // startAlertMessage is set to true
+        // (used for indicating the user when a foursquare query fails)
+        self.startAlertMessage = ko.observable(false);
+        self.setAlertMessage = ko.observable("");
+        self.startAlertMessage.subscribe(function(failed) {
+            if (failed) {
+                $('#alertModal').modal('show');
+                // reset startAlertMessage back to false when modal closes
+                $('#alertModal').on('hide.bs.modal', function () {
+                    self.startAlertMessage(false);
+                    $('#alertModal').unbind();
+                });
+            }
+        });
+
+        if(!google || !google.maps){
+            self.setAlertMessage("Failed to load google maps.");
+            self.startAlertMessage(true);
+        }
+
         // Create google map
         self.googleMap = new google.maps.Map(document.getElementById(mapConfig.canvasId), mapConfig.options);
 
@@ -662,21 +683,10 @@ $(document).ready(function() {
         // Create a list view
         self.listPanel = new ListView(self);
 
-        // Pops up a modal alert message when
-        // startAlertMessage is set to true
-        // (used for indicating the user when a foursquare query fails)
-        self.startAlertMessage = ko.observable(false);
-        self.setAlertMessage = ko.observable("");
-        self.startAlertMessage.subscribe(function(failed) {
-            if (failed) {
-                $('#alertModal').modal('show');
-                // reset startAlertMessage back to false when modal closes
-                $('#alertModal').on('hide.bs.modal', function () {
-                    self.startAlertMessage(false);
-                    $('#alertModal').unbind();
-                });
-            }
-        });
+        if (self.googleMap == null) {
+            self.setAlertMessage("Failed to load google maps. Please try again later.");
+            self.startAlertMessage(true);
+        }
 
         /**
          * Makes a foursquare query using the exploreObject.
