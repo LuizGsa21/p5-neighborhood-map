@@ -532,6 +532,7 @@ $(document).ready(function() {
         self.autoFocus = ko.observable(false);
 
         // When checked, list view will automatically close when user clicks on list item
+        // TODO: Auto close ListPanel for mobile devices
         self.autoClose = ko.observable(false);
 
         // search bar radio button
@@ -684,7 +685,11 @@ $(document).ready(function() {
          * @param exploreObject more details at https://developer.foursquare.com/docs/venues/explore
          */
         self.searchQuery = function (exploreObject) {
-
+            // Auto close list panel when user makes a query on mobile devices,
+            // so the markers can be seen on the map.
+            if (!self.isDesktopMode() && self.listPanel.isVisible()) {
+                self.listPanel.isVisible(false);
+            }
             // Clear the map before making a new query
             if (self.activeMarker() != null) {
                 // properly close the info window before setting it to null
@@ -793,9 +798,11 @@ $(document).ready(function() {
          */
         self.setActiveMarker = function (marker) {
 
-            // close list panel if auto close is checked (only available for desktop devices)
-            if (self.isDesktopMode() && self.listPanel.autoClose() && self.listPanel.isVisible()) {
-                self.listPanel.isVisible(false);
+            // If this is a mobile device or autoClose is checked, close the list panel
+            if (self.listPanel.isVisible()) {
+                if (!self.isDesktopMode() || self.listPanel.autoClose()) {
+                    self.listPanel.isVisible(false);
+                }
             }
             // if they're the same close infoWindow and set active marker to null
             if (self.activeMarker() === marker) {
@@ -813,6 +820,11 @@ $(document).ready(function() {
                 marker.openInfoWindow();
                 marker.updateZIndex();
                 self.centerOnMarker(marker.googleMarker.getPosition());
+
+                // set a closer zoom for mobile devices
+                if (!self.isDesktopMode()) {
+                    self.googleMap.setZoom(17);
+                }
             }
 
         };
