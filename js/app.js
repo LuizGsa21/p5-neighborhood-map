@@ -913,5 +913,10 @@ $(document).ready(function() {
         $('#alertModal').modal('show');
 
         $('#listPanel').css('display', 'none');
+        // Auto reload page when user closes modal
+        $('#alertModal').on('hide.bs.modal', function () {
+            location.reload();
+        });
+
     }
 });
