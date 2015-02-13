@@ -536,7 +536,6 @@ function initialize() {
         self.autoFocus = ko.observable(false);
 
         // When checked, list view will automatically close when user clicks on list item
-        // TODO: Auto close ListPanel for mobile devices
         self.autoClose = ko.observable(false);
 
         // search bar radio button
