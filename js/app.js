@@ -764,7 +764,7 @@ function initialize() {
                             } else {
                                 // Alert the user of request failed
                                 self.startAlertMessage(true);
-                                self.setAlertMessage(data.meta.errorDetail);
+                                self.setAlertMessage('One or more items failed to load.');
                             }
 
                             // set fitBounds every 10 markers
