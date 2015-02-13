@@ -94,7 +94,8 @@ $(document).ready(function() {
             $.ajax(url, {
                 dataType: 'jsonp',
                 success: response,
-                fail: response
+                error: response,
+                timeout: 4000
             });
         };
 
@@ -117,7 +118,7 @@ $(document).ready(function() {
             $.ajax(url, {
                 dataType: 'jsonp',
                 success: response,
-                fail: response
+                error: response
             });
 
         };
@@ -694,11 +695,25 @@ $(document).ready(function() {
 
             // Make a query using the explore object
             self.fsService.explore(exploreObject, function(data) {
+
+                // Check if there was a connection error
+                // `data.statusText` is defined when ajax.timeout limit is reached
+                if (data.statusText != null) {
+                    self.startAlertMessage(true);
+                    self.setAlertMessage('No connection could be found. Please try again later.');
+                    return;
+                }
+
                 var messageCode = data.meta.code;
                 if (messageCode === 200) {
 
                     // extract venue items from result
                     var items = data.response.groups[0].items;
+                    if (items.length == 0) {
+                        self.setAlertMessage('No results found for   "'+ self.listPanel.searchBar() + '"');
+                        self.startAlertMessage(true);
+                        return;
+                    }
 
                     var requestCount = items.length;
                     // keep track of when all results have been received
@@ -753,11 +768,11 @@ $(document).ready(function() {
 
                 } else if(messageCode === 500) { // Alert the user using a custom message
 
-                    self.startAlertMessage(true);
                     self.setAlertMessage("Foursquare’s servers are unhappy. Please try again.");
-                } else { // alert the user using Foursquare's errorDetail message
                     self.startAlertMessage(true);
+                } else { // alert the user using Foursquare's errorDetail message
                     self.setAlertMessage(data.meta.errorDetail);
+                    self.startAlertMessage(true);
                 }
             });
         };
