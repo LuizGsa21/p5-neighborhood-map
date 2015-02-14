@@ -122,7 +122,8 @@ function initialize() {
             $.ajax(url, {
                 dataType: 'jsonp',
                 success: response,
-                error: response
+                error: response,
+                timeout: 3000
             });
 
         };
